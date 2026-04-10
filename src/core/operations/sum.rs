@@ -1,4 +1,7 @@
 use crate::core::operations::calculation_handler::CalculationHandler;
+use crate::core::parser::parse_rule::ParseRule;
+use crate::core::parser::token::Token;
+use crate::core::parser::parser::Parser;
 
 pub struct SumOperation;
 impl CalculationHandler for SumOperation {
@@ -8,5 +11,19 @@ impl CalculationHandler for SumOperation {
     
     fn calc(&self, operands: &[f64]) -> f64 {
         operands[0] + operands[1]
+    }
+}
+
+impl ParseRule for SumOperation {
+    fn nud(&self, parser: &mut Parser) -> Option<Token> {
+        todo!()
+    }
+
+    fn led(&self, parser: &mut Parser, left: Token) -> Option<Token> {
+        todo!()
+    }
+
+    fn lbp(&self) -> u8 {
+        todo!()
     }
 }
