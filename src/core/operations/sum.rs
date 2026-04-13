@@ -16,7 +16,7 @@ impl CalculationHandler for SumOperation {
 
 impl ParseRule for SumOperation {
     fn nud(&self, parser: &mut Parser) -> Option<Token> {
-        todo!()
+        self.get_result()
     }
 
     fn led(&self, parser: &mut Parser, left: Token) -> Option<Token> {
