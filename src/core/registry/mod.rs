@@ -1,1 +1,1 @@
-mod operation_registry;
+pub mod operation_registry;

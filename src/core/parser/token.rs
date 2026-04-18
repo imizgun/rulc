@@ -1,5 +1,25 @@
+use crate::core::evaluator::evaluation_rule::EvaluationRule;
+use crate::core::operations::operation::Operation;
+use crate::core::parser::number_body::NumberBody;
+use crate::core::parser::parsable::Parsable;
+use crate::core::parser::parser::Parser;
+
 pub enum Token {
-    Number { raw: String, base: u8 },
+    Number(NumberBody),
     Variable(String),
-    Operation { sign: String, operands: Vec<Box<Token>> }
+    Operation(Box<dyn Operation>)
+}
+
+impl EvaluationRule for Token {
+    fn nud(&self, parser: &mut Parser) -> Option<Token> {
+        todo!()
+    }
+
+    fn led(&self, parser: &mut Parser, left: Token) -> Option<Token> {
+        todo!()
+    }
+
+    fn lbp(&self) -> u8 {
+        todo!()
+    }
 }

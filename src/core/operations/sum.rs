@@ -1,10 +1,10 @@
-use crate::core::operations::calculation_handler::CalculationHandler;
-use crate::core::parser::parse_rule::ParseRule;
+use crate::core::evaluator::evaluation_rule::EvaluationRule;
+use crate::core::operations::operation::Operation;
 use crate::core::parser::token::Token;
 use crate::core::parser::parser::Parser;
 
 pub struct SumOperation;
-impl CalculationHandler for SumOperation {
+impl Operation for SumOperation {
     fn get_operand_count(&self) -> u8 { 2 }
 
     fn get_sign(&self) -> &str { "+" }
@@ -14,9 +14,9 @@ impl CalculationHandler for SumOperation {
     }
 }
 
-impl ParseRule for SumOperation {
+impl EvaluationRule for SumOperation {
     fn nud(&self, parser: &mut Parser) -> Option<Token> {
-        self.get_result()
+        todo!()
     }
 
     fn led(&self, parser: &mut Parser, left: Token) -> Option<Token> {

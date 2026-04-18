@@ -1,7 +1,7 @@
-use crate::core::operations::calculation_handler::CalculationHandler;
+use crate::core::operations::operation::Operation;
 
 pub struct MinusOperation;
-impl CalculationHandler for MinusOperation {
+impl Operation for MinusOperation {
     fn get_operand_count(&self) -> u8 { 2 }
 
     fn get_sign(&self) -> &str { "-" }

@@ -1,7 +1,7 @@
 use crate::core::parser::parser::Parser;
 use crate::core::parser::token::Token;
 
-pub trait ParseRule {
+pub trait EvaluationRule {
     // prefix handler (when token doesn't have anything on the left side)
     fn nud(&self, parser: &mut Parser) -> Option<Token> { None }
 

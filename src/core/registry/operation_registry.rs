@@ -1,6 +1,6 @@
 use std::collections::HashMap;
-use crate::core::operations::calculation_handler::CalculationHandler;
+use crate::core::evaluator::evaluation_rule::EvaluationRule;
 
-struct OperationRegistry {
-    registered_operations: HashMap<String, Box<dyn CalculationHandler>>
+pub struct OperationRegistry {
+    registered_operations: HashMap<String, Box<dyn EvaluationRule>>
 }

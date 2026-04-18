@@ -1,4 +1,4 @@
-pub trait CalculationHandler {
+pub trait Operation {
     fn get_operand_count(&self) -> u8;
     fn get_sign(&self) -> &str;
     fn calc(&self, operands: &[f64]) -> f64;
