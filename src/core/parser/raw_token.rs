@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 
 #[derive(Debug)]
 pub enum RawToken {

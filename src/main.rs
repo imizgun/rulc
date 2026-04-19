@@ -1,10 +1,24 @@
 mod core;
+use crate::core::operations::multiply::MultiplyOperation;
+use crate::core::operations::sum::SumOperation;
 use crate::core::parser::parser::Parser;
+use crate::core::registries::identifiers_registry::IdentifiersRegistry;
+use crate::core::registries::operation_registry::OperationRegistry;
 
 fn main() {
     let mut str = String::new();
 
     _ = std::io::stdin().read_line(&mut str).unwrap();
+    
+    let sum_operation = SumOperation {};
+    let multiply_operation = MultiplyOperation {};
 
-    Parser::parse_expression(&str);
+    let mut operation_registry = OperationRegistry::new();
+    operation_registry.register(Box::new(sum_operation));
+    operation_registry.register(Box::new(multiply_operation));
+    
+    let identifiers_registry = IdentifiersRegistry::new();
+    let parser = Parser::new(&operation_registry, &identifiers_registry);
+
+    parser.parse_expression(&str);
 }

@@ -1,5 +1,3 @@
-use crate::core::parser::token::Token;
-
-pub trait Parsable {
-    fn parse(str: &str) -> Option<Token>;
+pub trait Parsable<T> {
+    fn parse(str: &str) -> Option<T>;
 }

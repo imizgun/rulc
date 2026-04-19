@@ -1,3 +1,4 @@
 pub mod operation;
-mod sum;
-mod minus;
+pub mod sum;
+pub mod minus;
+pub mod multiply;

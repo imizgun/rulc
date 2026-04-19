@@ -1,4 +1,4 @@
 pub mod operations;
-pub mod registry;
+pub mod registries;
 pub mod parser;
 pub mod evaluator;
