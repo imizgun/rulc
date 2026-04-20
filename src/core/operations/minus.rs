@@ -1,3 +1,4 @@
+use crate::core::evaluator::evaluation_rule::EvaluationRule;
 use crate::core::operations::operation::Operation;
 
 pub struct MinusOperation;
@@ -9,4 +10,8 @@ impl Operation for MinusOperation {
     fn calc(&self, operands: &[f64]) -> f64 {
         operands[0] - operands[1]
     }
+}
+
+impl EvaluationRule for MinusOperation {
+    
 }

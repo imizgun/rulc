@@ -65,6 +65,8 @@ impl Parser<'_> {
         if !buffer.is_empty() {
             raw.push(self.classify_raw_token(&state, &buffer));
         }
+        
+        raw.push(RawToken::Eof);
 
         raw
     }
@@ -92,6 +94,7 @@ impl Parser<'_> {
                 let identifier = self.identifiers_registry.get_identifier(body)?;
                 Some(Token::Variable(identifier.to_string()))
             },
+            RawToken::Eof => Some(Token::Eof),
             _ => unreachable!()
         }
     }

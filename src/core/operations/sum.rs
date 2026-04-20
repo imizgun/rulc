@@ -2,7 +2,6 @@ use crate::core::evaluator::evaluation_rule::EvaluationRule;
 use crate::core::evaluator::evaluator::Evaluator;
 use crate::core::operations::operation::Operation;
 use crate::core::parser::token::Token;
-use crate::core::parser::parser::Parser;
 
 pub struct SumOperation;
 impl Operation for SumOperation {
@@ -20,11 +19,7 @@ impl EvaluationRule for SumOperation {
         todo!()
     }
 
-    fn led(&self, parser: &mut Evaluator, left: Token) -> Option<Token> {
-        todo!()
-    }
-
-    fn lbp(&self) -> u8 {
-        todo!()
+    fn lbp(&self) -> u32 {
+        10
     }
 }

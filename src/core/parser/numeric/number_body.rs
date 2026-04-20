@@ -1,10 +1,10 @@
 use crate::core::parser::parsable::Parsable;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NumberBody {
-    raw: String,
-    base: u8,
-    decimal_value: f64
+    pub raw: String,
+    pub base: u8,
+    pub decimal_value: f64
 }
 
 impl Parsable<NumberBody> for NumberBody {

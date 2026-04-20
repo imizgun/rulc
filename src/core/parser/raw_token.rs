@@ -4,5 +4,6 @@ use std::fmt::{Debug, Display, Formatter};
 pub enum RawToken {
     Number(String),
     Identifier(String),
-    Operator(String)
+    Operator(String),
+    Eof
 }
