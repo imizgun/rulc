@@ -1,6 +1,7 @@
 use std::fmt::Pointer;
 use std::fmt::Debug;
 use crate::core::evaluator::evaluation_rule::EvaluationRule;
+use crate::core::evaluator::evaluator::Evaluator;
 use crate::core::operations::operation::Operation;
 use crate::core::parser::numeric::number_body::NumberBody;
 use crate::core::parser::parser::Parser;
@@ -12,11 +13,11 @@ pub enum Token<'a> {
 }
 
 impl EvaluationRule for Token<'_> {
-    fn nud(&self, parser: &mut Parser) -> Option<Token> {
+    fn nud(&self, parser: &mut Evaluator) -> Option<Token> {
         todo!()
     }
 
-    fn led(&self, parser: &mut Parser, left: Token) -> Option<Token> {
+    fn led(&self, parser: &mut Evaluator, left: Token) -> Option<Token> {
         todo!()
     }
 
