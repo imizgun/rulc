@@ -7,6 +7,16 @@ pub struct NumberBody {
     pub decimal_value: f64
 }
 
+impl NumberBody {
+    pub fn from_f64(f: f64) -> NumberBody {
+        NumberBody {
+            decimal_value: f,
+            raw: f.to_string(),
+            base: 10
+        }
+    }
+}
+
 impl Parsable<NumberBody> for NumberBody {
     fn parse(str: &str) -> Option<NumberBody> {
         match str.trim().parse() {

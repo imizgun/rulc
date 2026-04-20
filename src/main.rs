@@ -2,6 +2,7 @@ mod core;
 
 use std::sync::Arc;
 use crate::core::evaluator::evaluator::Evaluator;
+use crate::core::operations::minus::MinusOperation;
 use crate::core::operations::multiply::MultiplyOperation;
 use crate::core::operations::sum::SumOperation;
 use crate::core::parser::parser::Parser;
@@ -15,10 +16,12 @@ fn main() {
     
     let sum_operation = SumOperation {};
     let multiply_operation = MultiplyOperation {};
+    let minus_operation = MinusOperation {};
 
     let mut operation_registry = OperationRegistry::new();
     operation_registry.register(Arc::new(sum_operation));
     operation_registry.register(Arc::new(multiply_operation));
+    operation_registry.register(Arc::new(minus_operation));
     
     let identifiers_registry = IdentifiersRegistry::new();
     let parser = Parser::new(&operation_registry, &identifiers_registry);
