@@ -1,5 +1,5 @@
 #[derive(PartialEq, Eq)]
-pub enum ParserState {
+pub enum LexerState {
     Idle,
     Number,
     Identifier,
