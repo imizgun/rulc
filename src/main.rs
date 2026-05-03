@@ -1,5 +1,6 @@
 mod core;
 use std::io::{Read, Write};
+use colored::{ColoredString, Colorize};
 use crate::core::evaluate_service::EvaluateService;
 
 fn main() {
@@ -18,10 +19,19 @@ fn main() {
         let res = eval_service.evaluate(&str);
 
         match res {
-            Ok(res) => println!(">> {}", res),
-            Err(error) => println!(">> {}", error)
+            Ok(res) => println!("{} {}",
+                                get_invite().green().bold(),
+                                res.to_string().green().bold()),
+
+            Err(error) => println!("{} {}",
+                                   get_invite().red().bold(),
+                                   error.red().bold())
         }
 
         println!();
     }
+}
+
+fn get_invite() -> String {
+    ">>".to_string()
 }

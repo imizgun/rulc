@@ -67,13 +67,16 @@ impl Parser<'_> {
         }
     }
 
-    fn get_error_text(&self, sliced: &Vec<RawToken>, index: usize, error_text: &str) -> String {
-        let tokens = sliced.iter()
+    fn get_error_text(&self, sliced: &[RawToken], index: usize, error_text: &str) -> String {
+        let tokens: Vec<String> = sliced.iter()
             .filter(|t| !matches!(t, RawToken::Eof))
-            .map(|t| format!("{:?}", t))
-            .collect::<Vec<_>>().join(" ");
+            .map(|t| t.to_string())
+            .collect();
 
-        format!("{}\n  ╰{}^ {}
-                  ", tokens, "–".repeat(index * 2), error_text)
+        let offset = tokens[..index].iter()
+            .map(|t| t.len() + 1)
+            .sum::<usize>();
+
+        format!("{}\n  ╰{}^ {}", tokens.join(" "), "–".repeat(offset), error_text)
     }
 }
