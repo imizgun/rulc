@@ -24,7 +24,7 @@ impl Parsable<NumberBody> for NumberBody {
                 raw: str.to_string(),
                 base: 10,
                 decimal_value: num}),
-            Err(err) => None
+            Err(_) => None
         }
     }
 }

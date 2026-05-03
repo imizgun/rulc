@@ -12,7 +12,7 @@ impl Lexer {
         for ch in expression.chars() {
             let next_state = match ch {
                 '0'..='9' | '.' => LexerState::Number,
-                'a'..='z' | 'A'..='Z' => LexerState::Identifier,
+                c if c.is_alphabetic() => LexerState::Identifier,
                 ' ' => LexerState::Idle,
                 _ => LexerState::Operator
             };

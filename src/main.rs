@@ -1,11 +1,13 @@
 mod core;
-use std::io::Write;
+use std::io::{Read, Write};
 use crate::core::evaluate_service::EvaluateService;
 
 fn main() {
-    let mut str = String::new();
+    let eval_service = EvaluateService::new();
 
     loop {
+        let mut str = String::new();
+
         print!("> ");
         _ = std::io::stdout().flush();
         
@@ -13,7 +15,13 @@ fn main() {
             .read_line(&mut str)
             .unwrap();
 
-        println!(">> {}", EvaluateService::evaluate(&str));
+        let res = eval_service.evaluate(&str);
+
+        match res {
+            Ok(res) => println!(">> {}", res),
+            Err(error) => println!(">> {}", error)
+        }
+
         println!();
     }
 }

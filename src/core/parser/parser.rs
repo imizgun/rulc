@@ -2,6 +2,7 @@ use crate::core::lexer::lexer::Lexer;
 use crate::core::parser::numeric::number_body::NumberBody;
 use crate::core::parser::parsable::Parsable;
 use crate::core::lexer::raw_token::RawToken;
+use crate::core::parser::parse_error::ParseError;
 use crate::core::parser::token::Token;
 use crate::core::registries::identifiers_registry::IdentifiersRegistry;
 use crate::core::registries::operation_registry::OperationRegistry;
@@ -24,37 +25,55 @@ impl Parser<'_> {
         }
     }
 
-    pub fn parse_expression(&self, expression: &str) -> Vec<Token> {
+    pub fn parse_expression(&self, expression: &str) -> Result<Vec<Token>, String> {
         let sliced = self.lexer.slice_input_string(expression.trim());
 
         let mut tokens: Vec<Token> = Vec::new();
 
-        for i in &sliced {
-            let parsed_token = self.parse_raw_token(i)
-                .expect(&format!("Failed to parse raw token: {:?}", i));
+        for i in 0..sliced.len() {
+            let parsed_token = self.parse_raw_token(&sliced[i]);
 
-            tokens.push(parsed_token);
+            match parsed_token {
+                Ok(parsed_token) => tokens.push(parsed_token),
+                Err(err) => {
+                    let err_str = self.get_error_text(&sliced, i, &err.to_string());
+                    return Err(err_str);
+                }
+            }
         }
 
-        tokens
+        Ok(tokens)
     }
 
-    fn parse_raw_token(&self, raw_token: &RawToken) -> Option<Token> {
+    fn parse_raw_token(&self, raw_token: &RawToken) -> Result<Token, ParseError> {
         match raw_token {
             RawToken::Number(body) => {
-                let num_body = NumberBody::parse(body)?;
-                Some(Token::Number(num_body))
+                NumberBody::parse(body)
+                    .map(Token::Number)
+                    .ok_or_else(|| ParseError::InvalidNumber(body.clone()))
             },
             RawToken::Operator(body) => {
-                let operation = self.operation_registry.get(body)?;
-                Some(Token::Operation(operation))
+                self.operation_registry.get(body)
+                    .map(Token::Operation)
+                    .ok_or_else(|| ParseError::UnknownOperator(body.clone()))
             },
             RawToken::Identifier(body) => {
-                let identifier = self.identifiers_registry.get_identifier(body)?;
-                Some(Token::Variable(identifier.to_string()))
+                self.identifiers_registry.get_identifier(body)
+                    .map(|x| Token::Variable(x.to_string()))
+                    .ok_or_else(|| ParseError::UnknownIdentifier(body.clone()))
             },
-            RawToken::Eof => Some(Token::Eof),
+            RawToken::Eof => Ok(Token::Eof),
             _ => unreachable!()
         }
+    }
+
+    fn get_error_text(&self, sliced: &Vec<RawToken>, index: usize, error_text: &str) -> String {
+        let tokens = sliced.iter()
+            .filter(|t| !matches!(t, RawToken::Eof))
+            .map(|t| format!("{:?}", t))
+            .collect::<Vec<_>>().join(" ");
+
+        format!("{}\n  ╰{}^ {}
+                  ", tokens, "–".repeat(index * 2), error_text)
     }
 }
