@@ -1,5 +1,7 @@
+use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluation_rule::EvaluationRule;
 use crate::core::parser::token::Token;
+use crate::core::runtime_error::RuntimeError;
 
 pub struct Evaluator {
     cursor: usize,
@@ -14,11 +16,16 @@ impl Evaluator {
         }
     }
 
-    pub fn evaluate(&mut self, rbp: u32) -> f64 {
+    pub fn evaluate(&mut self, rbp: u32) -> Result<f64, RuntimeError> {
         let token_idx = self.cursor;
         self.cursor += 1;
         let token = self.tokens[token_idx].clone();
-        let mut left = token.nud(self).expect("Evaluator::evaluate [let left] error");
+        let mut left = match token.nud(self) {
+            Some(left) => left,
+            None => {
+                return Err(EvaluationError::InvalidTokenPlace(format!("", )))
+            }
+        }
 
         while self.peek().lbp() > rbp {
             let next_idx = self.cursor;

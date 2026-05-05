@@ -77,6 +77,6 @@ impl Parser<'_> {
             .map(|t| t.len() + 1)
             .sum::<usize>();
 
-        format!("{}\n  ╰{}^ {}", tokens.join(" "), "–".repeat(offset), error_text)
+        format!("{}\n  ╰{}^ {}", tokens.join(" "), "—".repeat(offset), error_text)
     }
 }

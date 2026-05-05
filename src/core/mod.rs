@@ -5,3 +5,4 @@ pub mod evaluator;
 pub mod lexer;
 pub mod core_initializer;
 pub mod evaluate_service;
+mod runtime_error;
