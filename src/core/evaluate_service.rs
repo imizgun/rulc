@@ -22,7 +22,7 @@ impl EvaluateService {
                 let mut evaluator = Evaluator::new(tokens);
                 Ok(evaluator.evaluate(0).unwrap())
             }
-            Err(error) => Err(error)
+            Err(error) => Err(RuntimeError::ParseError(error))
         }
     }
 }

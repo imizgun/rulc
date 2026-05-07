@@ -23,9 +23,9 @@ impl Evaluator {
         let mut left = match token.nud(self) {
             Some(left) => left,
             None => {
-                return Err(EvaluationError::InvalidTokenPlace(format!("", )))
+                return Err(RuntimeError::EvalError(EvaluationError::InvalidTokenPlace("".to_string())));
             }
-        }
+        };
 
         while self.peek().lbp() > rbp {
             let next_idx = self.cursor;
@@ -36,7 +36,7 @@ impl Evaluator {
                 .expect("Evaluator::evaluate [loop assign left] error");
 
         }
-        left.as_f64().unwrap()
+        Ok(left.as_f64().unwrap())
     }
 
     fn peek(&self) -> &Token {

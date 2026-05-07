@@ -25,7 +25,7 @@ impl Parser<'_> {
         }
     }
 
-    pub fn parse_expression(&self, expression: &str) -> Result<Vec<Token>, String> {
+    pub fn parse_expression(&self, expression: &str) -> Result<Vec<Token>, ParseError> {
         let sliced = self.lexer.slice_input_string(expression.trim());
 
         let mut tokens: Vec<Token> = Vec::new();
@@ -37,7 +37,7 @@ impl Parser<'_> {
                 Ok(parsed_token) => tokens.push(parsed_token),
                 Err(err) => {
                     let err_str = self.get_error_text(&sliced, i, &err.to_string());
-                    return Err(err_str);
+                    return Err(err);
                 }
             }
         }
