@@ -1,5 +1,4 @@
 use crate::core::evaluator::evaluator::Evaluator;
-use crate::core::parser::parser::Parser;
 use crate::core::parser::token::Token;
 
 pub trait EvaluationRule {

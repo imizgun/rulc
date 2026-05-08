@@ -5,6 +5,7 @@ use crate::core::parser::numeric::number_body::NumberBody;
 use crate::core::parser::token::Token;
 
 pub struct SumOperation;
+
 impl Operation for SumOperation {
     fn get_operand_count(&self) -> u8 { 2 }
 
@@ -17,9 +18,8 @@ impl Operation for SumOperation {
 
 impl EvaluationRule for SumOperation {
     fn nud(&self, evaluator: &mut Evaluator) -> Option<Token> {
-        let right = evaluator.evaluate(100);
-        
-        Some(Token::Number(NumberBody::from_f64(right)))
+        let right = evaluator.evaluate(100).ok()?;
+        Some(Token::Number(NumberBody::from(right)))
     }
 
     fn lbp(&self) -> u32 {

@@ -1,5 +1,4 @@
-use std::fmt::Pointer;
-use std::fmt::Debug;
+use std::fmt::{Debug, Display, Formatter};
 use std::sync::Arc;
 use crate::core::evaluator::evaluation_rule::EvaluationRule;
 use crate::core::evaluator::evaluator::Evaluator;
@@ -23,6 +22,7 @@ impl Token {
         }
     }
 }
+
 impl EvaluationRule for Token {
     fn nud(&self, evaluator: &mut Evaluator) -> Option<Token> {
         match self {
@@ -50,13 +50,19 @@ impl EvaluationRule for Token {
     }
 }
 
+impl Display for Token {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Token::Number(b) => write!(f, "{}", b.raw),
+            Token::Variable(v) => write!(f, "{}", v),
+            Token::Operation(op) => write!(f, "{}", op.get_sign()),
+            Token::Eof => write!(f, "EOF"),
+        }
+    }
+}
+
 impl Debug for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Token::Number(b) => b.fmt(f),
-            Token::Variable(v) => Debug::fmt(&v, f),
-            Token::Operation(op) => op.fmt(f),
-            Token::Eof => f.write_str("EOF")
-        }
+        Display::fmt(self, f)
     }
 }

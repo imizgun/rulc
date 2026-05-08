@@ -18,15 +18,9 @@ pub trait Operation: EvaluationRule {
     }
 
     fn default_led(&self, evaluator: &mut Evaluator, left: &Token) -> Option<Token> {
-        let right = evaluator.evaluate(self.lbp());
-
+        let right = evaluator.evaluate(self.lbp()).ok()?;
         let left_res = left.as_f64()?;
-
         let res = self.get_result(&[left_res, right]);
-        Some(Number(NumberBody {
-            base: 10,
-            raw: res.to_string(),
-            decimal_value: res
-        }))
+        Some(Number(NumberBody { base: 10, raw: res.to_string(), decimal_value: res }))
     }
 }

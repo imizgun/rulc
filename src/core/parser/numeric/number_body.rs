@@ -7,8 +7,8 @@ pub struct NumberBody {
     pub decimal_value: f64
 }
 
-impl NumberBody {
-    pub fn from_f64(f: f64) -> NumberBody {
+impl From<f64> for NumberBody {
+    fn from(f: f64) -> NumberBody {
         NumberBody {
             decimal_value: f,
             raw: f.to_string(),

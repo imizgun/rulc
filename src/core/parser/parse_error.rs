@@ -1,5 +1,6 @@
 use std::fmt::{Display, Formatter};
 
+#[derive(Debug)]
 pub enum ParseError {
     UnknownOperator(String),
     UnknownIdentifier(String),

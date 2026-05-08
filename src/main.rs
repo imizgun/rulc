@@ -1,6 +1,6 @@
 mod core;
-use std::io::{Read, Write};
-use colored::{ColoredString, Colorize};
+use std::io::Write;
+use colored::Colorize;
 use crate::core::evaluate_service::EvaluateService;
 
 fn main() {
@@ -25,7 +25,7 @@ fn main() {
 
             Err(error) => println!("{} {}",
                                    get_invite().red().bold(),
-                                   error.red().bold())
+                                   error.to_string().red().bold())
         }
 
         println!();

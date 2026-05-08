@@ -17,9 +17,8 @@ impl Operation for MinusOperation {
 
 impl EvaluationRule for MinusOperation {
     fn nud(&'_ self, evaluator: &mut Evaluator) -> Option<Token> {
-        let right = evaluator.evaluate(100);
-        
-        Some(Token::Number(NumberBody::from_f64(-right)))
+        let right = evaluator.evaluate(100).ok()?;
+        Some(Token::Number(NumberBody::from(-right)))
     }
     
     fn lbp(&self) -> u32 {
