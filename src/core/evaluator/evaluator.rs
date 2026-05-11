@@ -15,6 +15,19 @@ impl Evaluator {
         Evaluator { cursor: 0, tokens }
     }
 
+    pub fn run(&mut self) -> Result<f64, Located<EvaluationError>> {
+        let result = self.evaluate(0)?;
+
+        if !matches!(self.tokens[self.cursor], Token::Eof) {
+            return Err(Located::new(
+                EvaluationError::MissingOperator,
+                self.make_context(self.cursor - 1),
+            ));
+        }
+
+        Ok(result)
+    }
+
     pub fn evaluate(&mut self, rbp: u32) -> Result<f64, Located<EvaluationError>> {
         let token_idx = self.cursor;
         self.cursor += 1;
@@ -34,13 +47,6 @@ impl Evaluator {
             left = next_token.led(self, &left).ok_or_else(|| {
                 Located::new(EvaluationError::MissingOperand, self.make_context(next_idx))
             })?
-        }
-
-        if self.cursor != self.tokens.len() - 1 {
-            return Err(Located::new(
-                EvaluationError::MissingOperator,
-                self.make_context(self.cursor - 1),
-            ));
         }
 
         left.as_f64().ok_or_else(|| {

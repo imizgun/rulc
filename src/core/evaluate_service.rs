@@ -16,6 +16,6 @@ impl EvaluateService {
     pub fn evaluate(&self, string: &str) -> Result<f64, RuntimeError> {
         let tokens = self.core.build_parser().parse_expression(string)?;
         let mut evaluator = Evaluator::new(tokens);
-        Ok(evaluator.evaluate(0)?)
+        Ok(evaluator.run()?)
     }
 }
