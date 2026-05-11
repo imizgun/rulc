@@ -51,6 +51,8 @@ impl Parser<'_> {
             RawToken::Number(body) => NumberBody::parse(body)
                 .map(Token::Number)
                 .ok_or_else(|| ParseError::InvalidNumber(body.clone())),
+            RawToken::Operator(body) if body == "(" => Ok(Token::OpenParen),
+            RawToken::Operator(body) if body == ")" => Ok(Token::CloseParen),
             RawToken::Operator(body) => self.operation_registry.get(body)
                 .map(Token::Operation)
                 .ok_or_else(|| ParseError::UnknownOperator(body.clone())),

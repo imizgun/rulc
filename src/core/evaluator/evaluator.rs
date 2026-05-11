@@ -1,5 +1,3 @@
-use std::io::LineWriter;
-
 use crate::core::error_display::{ErrorContext, Located};
 use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluation_rule::EvaluationRule;
@@ -55,6 +53,10 @@ impl Evaluator {
                 self.make_context(token_idx),
             )
         })
+    }
+
+    pub fn consume(&mut self) {
+        self.cursor += 1;
     }
 
     fn peek(&self) -> &Token {

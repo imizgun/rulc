@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use crate::core::lexer::lexer::Lexer;
+use crate::core::operations::division::DivisionOperation;
 use crate::core::operations::minus::MinusOperation;
 use crate::core::operations::multiply::MultiplyOperation;
 use crate::core::operations::sum::SumOperation;
@@ -19,6 +20,7 @@ impl CoreInitializer {
         operation_registry.register(Arc::new(SumOperation));
         operation_registry.register(Arc::new(MultiplyOperation));
         operation_registry.register(Arc::new(MinusOperation));
+        operation_registry.register(Arc::new(DivisionOperation));
 
         CoreInitializer {
             operation_registry,
