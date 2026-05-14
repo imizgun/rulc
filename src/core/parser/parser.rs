@@ -41,17 +41,16 @@ impl Parser<'_> {
                 let tokens = self.parse_raw_tokens(rhs, &display_tokens, 2)?;
                 return Ok(Statement::Assignment { name, tokens });
             }
-            else if op.ends_with("=") { 
-                let base_operation_sign = op[..op.len() - 1].trim();
-                // x += 12 -> x = x + 12
-                if let Some(base_op) = self.operation_registry.get(base_operation_sign) {
+            else if op.ends_with("=") {
+                let base_sign = op[..op.len() - 1].trim();
+
+                if self.operation_registry.get(base_sign).is_some() {
                     let expanded_rhs = &mut sliced[2..].to_vec();
-                    expanded_rhs.insert(0, RawToken::Operator(base_operation_sign.to_string()));
+                    expanded_rhs.insert(0, RawToken::Operator(base_sign.to_string()));
                     expanded_rhs.insert(0, RawToken::Identifier(name.clone()));
-                    
+
                     let tokens = self.parse_raw_tokens(expanded_rhs, &display_tokens, 2)?;
-                    
-                    return Ok(Statement::Assignment {name: name.clone(), tokens})
+                    return Ok(Statement::Assignment { name: name.clone(), tokens });
                 }
             }
         }

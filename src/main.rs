@@ -4,6 +4,8 @@ use colored::Colorize;
 use crate::core::evaluate_service::EvaluateService;
 
 fn main() {
+    print_start_message();
+
     let mut eval_service = EvaluateService::new();
 
     loop {
@@ -38,4 +40,10 @@ fn main() {
 
 fn get_invite() -> String {
     ">>".to_string()
+}
+
+fn print_start_message() {
+    println!("\n{} {}\n",
+             "Welcome to rulc!".green(),
+             format!("Version: {}", env!("CARGO_PKG_VERSION")).bold());
 }
