@@ -1,5 +1,6 @@
 use std::fmt::{Debug, Display, Formatter};
 
+#[derive(Clone)]
 pub enum RawToken {
     Number(String),
     Identifier(String),

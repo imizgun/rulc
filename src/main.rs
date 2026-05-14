@@ -4,7 +4,7 @@ use colored::Colorize;
 use crate::core::evaluate_service::EvaluateService;
 
 fn main() {
-    let eval_service = EvaluateService::new();
+    let mut eval_service = EvaluateService::new();
 
     loop {
         let mut str = String::new();
@@ -15,6 +15,10 @@ fn main() {
         _ = std::io::stdin()
             .read_line(&mut str)
             .unwrap();
+
+        if str.trim().is_empty() {
+            continue
+        }
 
         let res = eval_service.evaluate(&str);
 

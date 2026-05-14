@@ -10,7 +10,7 @@ use crate::core::registries::operation_registry::OperationRegistry;
 
 pub struct CoreInitializer {
     operation_registry: OperationRegistry,
-    identifiers_registry: IdentifiersRegistry<'static>,
+    identifiers_registry: IdentifiersRegistry,
     lexer: Lexer,
 }
 
@@ -31,5 +31,13 @@ impl CoreInitializer {
 
     pub fn build_parser(&self) -> Parser<'_> {
         Parser::new(&self.operation_registry, &self.identifiers_registry, &self.lexer)
+    }
+
+    pub fn identifiers_registry(&self) -> &IdentifiersRegistry {
+        &self.identifiers_registry
+    }
+
+    pub fn identifiers_registry_mut(&mut self) -> &mut IdentifiersRegistry {
+        &mut self.identifiers_registry
     }
 }

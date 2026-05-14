@@ -2,15 +2,20 @@ use crate::core::error_display::{ErrorContext, Located};
 use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluation_rule::EvaluationRule;
 use crate::core::parser::token::Token;
+use crate::core::registries::identifiers_registry::IdentifiersRegistry;
 
-pub struct Evaluator {
+pub struct Evaluator<'a> {
     cursor: usize,
     tokens: Vec<Token>,
+    pub identifier_registry: &'a IdentifiersRegistry
 }
 
-impl Evaluator {
-    pub fn new(tokens: Vec<Token>) -> Evaluator {
-        Evaluator { cursor: 0, tokens }
+impl Evaluator<'_> {
+    pub fn new(tokens: Vec<Token>, identifiers_registry: &'_ IdentifiersRegistry) -> Evaluator<'_> {
+        Evaluator {
+            cursor: 0,
+            tokens,
+            identifier_registry: identifiers_registry }
     }
 
     pub fn run(&mut self) -> Result<f64, Located<EvaluationError>> {

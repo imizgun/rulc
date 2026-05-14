@@ -34,7 +34,8 @@ impl EvaluationRule for Token {
                 evaluator.consume();
                 Some(Token::Number(NumberBody::from(result)))
             }
-            Token::Variable(_) => todo!(),
+            Token::Variable(str) => Some(Token::Number(
+                NumberBody::from(evaluator.identifier_registry.get_identifier(str)?))),
             Token::CloseParen | Token::Eof => None,
         }
     }
