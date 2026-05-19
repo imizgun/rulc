@@ -1,6 +1,7 @@
 use crate::core::error_display::{ErrorContext, Located};
 use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluation_rule::EvaluationRule;
+use crate::core::evaluator::evaluator_result::Value;
 use crate::core::parser::token::Token;
 use crate::core::registries::identifiers_registry::IdentifiersRegistry;
 
@@ -18,7 +19,7 @@ impl Evaluator<'_> {
             identifier_registry: identifiers_registry }
     }
 
-    pub fn run(&mut self) -> Result<f64, Located<EvaluationError>> {
+    pub fn run(&mut self) -> Result<Value, Located<EvaluationError>> {
         let result = self.evaluate(0)?;
 
         if !matches!(self.tokens[self.cursor], Token::Eof) {
@@ -31,33 +32,30 @@ impl Evaluator<'_> {
         Ok(result)
     }
 
-    pub fn evaluate(&mut self, rbp: u32) -> Result<f64, Located<EvaluationError>> {
+    pub fn evaluate(&mut self, rbp: u32) -> Result<Value, Located<EvaluationError>> {
         let token_idx = self.cursor;
         self.cursor += 1;
         let token = self.tokens[token_idx].clone();
 
-        let mut left = token.nud(self).ok_or_else(|| {
-            Located::new(
-                EvaluationError::InvalidTokenPlace(token.to_string()),
-                self.make_context(token_idx),
-            )
+        let mut left = token.nud(self).map_err(|e| {
+            Located::new(e, self.make_context(token_idx))
         })?;
 
         while self.peek().lbp() > rbp {
             let next_idx = self.cursor;
             self.cursor += 1;
             let next_token = self.tokens[next_idx].clone();
-            left = next_token.led(self, &left).ok_or_else(|| {
-                Located::new(EvaluationError::MissingOperand, self.make_context(next_idx))
+            left = next_token.led(self, &left).map_err(|e| {
+                Located::new(e, self.make_context(next_idx))
             })?
         }
 
-        left.as_f64().ok_or_else(|| {
+        Ok(Value::Numeric(left.as_f64().ok_or_else(|| {
             Located::new(
                 EvaluationError::MissingOperand,
                 self.make_context(token_idx),
             )
-        })
+        })?))
     }
 
     pub fn consume(&mut self) {

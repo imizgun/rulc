@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use crate::core::parser::identifier_value::IdentifierValue;
 
+#[derive(Clone)]
 pub struct IdentifiersRegistry {
     identifiers: HashMap<String, IdentifierValue>
 }

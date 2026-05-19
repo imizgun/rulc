@@ -1,7 +1,16 @@
+use std::fmt::Display;
+
 #[derive(Debug)]
-pub enum EvaluatorResult {
-    None,
-    Boolean(bool),
+pub enum Value {
     Numeric(f64),
-    Message(String)
+    Boolean(bool),
+}
+
+impl Display for Value {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Value::Numeric(n) => write!(f, "{}", n),
+            Value::Boolean(b) => write!(f, "{}", b),
+        }
+    }
 }

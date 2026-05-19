@@ -3,16 +3,16 @@ use std::fmt::{Display, Formatter};
 #[derive(Debug)]
 pub enum ParseError {
     UnknownOperator(String),
-    UnknownIdentifier(String),
-    InvalidNumber(String)
+    InvalidNumber(String),
+    UnmatchedParen,
 }
 
 impl Display for ParseError {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
-            ParseError::UnknownOperator(operator) => write!(f, "unknown operator: '{}'", operator),
-            ParseError::UnknownIdentifier(identifier) => write!(f, "unknown identifier: '{}'", identifier),
-            ParseError::InvalidNumber(number) => write!(f, "invalid number: '{}'", number)
+            ParseError::UnknownOperator(op) => write!(f, "unknown operator: '{}'", op),
+            ParseError::InvalidNumber(n) => write!(f, "invalid number: '{}'", n),
+            ParseError::UnmatchedParen => write!(f, "unmatched parenthesis"),
         }
     }
 }

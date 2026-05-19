@@ -30,7 +30,7 @@ impl CoreInitializer {
     }
 
     pub fn build_parser(&self) -> Parser<'_> {
-        Parser::new(&self.operation_registry, &self.identifiers_registry, &self.lexer)
+        Parser::new(&self.operation_registry, &self.lexer)
     }
 
     pub fn identifiers_registry(&self) -> &IdentifiersRegistry {

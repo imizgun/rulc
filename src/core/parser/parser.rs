@@ -6,22 +6,19 @@ use crate::core::parser::parsable::Parsable;
 use crate::core::parser::parse_error::ParseError;
 use crate::core::parser::statement::Statement;
 use crate::core::parser::token::Token;
-use crate::core::registries::identifiers_registry::IdentifiersRegistry;
 use crate::core::registries::operation_registry::OperationRegistry;
 
 pub struct Parser<'a> {
     operation_registry: &'a OperationRegistry,
-    identifiers_registry: &'a IdentifiersRegistry,
     lexer: &'a Lexer,
 }
 
 impl Parser<'_> {
     pub fn new<'a>(
         operation_registry: &'a OperationRegistry,
-        identifiers_registry: &'a IdentifiersRegistry,
         lexer: &'a Lexer,
     ) -> Parser<'a> {
-        Parser { operation_registry, identifiers_registry, lexer }
+        Parser { operation_registry, lexer }
     }
 
     pub fn parse(&self, input: &str) -> Result<Statement, Located<ParseError>> {
@@ -88,13 +85,7 @@ impl Parser<'_> {
             RawToken::Operator(body) => self.operation_registry.get(body)
                 .map(Token::Operation)
                 .ok_or_else(|| ParseError::UnknownOperator(body.clone())),
-            RawToken::Identifier(body) => {
-                if self.identifiers_registry.get_identifier(body).is_some() {
-                    Ok(Token::Variable(body.clone()))
-                } else {
-                    Err(ParseError::UnknownIdentifier(body.clone()))
-                }
-            }
+            RawToken::Identifier(body) => Ok(Token::Variable(body.clone())),
             RawToken::Eof => Ok(Token::Eof),
         }
     }

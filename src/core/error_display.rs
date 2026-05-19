@@ -21,6 +21,10 @@ impl<E> Located<E> {
     pub fn new(error: E, context: ErrorContext) -> Self {
         Located { error, context }
     }
+
+    pub fn unlocated(error: E) -> Self {
+        Located { error, context: ErrorContext::new(vec![], 0) }
+    }
 }
 
 impl<E: Display> Display for Located<E> {

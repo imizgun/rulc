@@ -1,9 +1,11 @@
+use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluation_rule::EvaluationRule;
 use crate::core::evaluator::evaluator::Evaluator;
 use crate::core::operations::operation::Operation;
 use crate::core::parser::numeric::number_body::NumberBody;
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::Arc;
+use crate::core::evaluator::evaluator_result::Value;
 use crate::core::parser::identifier_value::IdentifierValue;
 
 #[derive(Clone)]
@@ -26,28 +28,34 @@ impl Token {
 }
 
 impl EvaluationRule for Token {
-    fn nud(&self, evaluator: &mut Evaluator) -> Option<Token> {
+    fn nud(&self, evaluator: &mut Evaluator) -> Result<Token, EvaluationError> {
         match self {
-            Token::Number(n) => Some(Token::Number(n.clone())),
+            Token::Number(n) => Ok(Token::Number(n.clone())),
             Token::Operation(op) => op.nud(evaluator),
             Token::OpenParen => {
-                let result = evaluator.evaluate(0).ok()?;
+                let result = evaluator.evaluate(0).map_err(|e| e.error)?;
                 evaluator.consume();
-                Some(Token::Number(NumberBody::from(result)))
+                match result {
+                    Value::Numeric(n) => Ok(Token::Number(NumberBody::from(n))),
+                    other => Err(EvaluationError::InvalidTokenPlace(other.to_string())),
+                }
             }
-            Token::Variable(str) => Some(Token::Number(
-                NumberBody::from(match evaluator.identifier_registry.get_identifier(str)? {
-                    IdentifierValue::Number(num) => num,
-                    _ => return None
-                }))),
-            Token::CloseParen | Token::Eof => None,
+            Token::Variable(name) => match evaluator.identifier_registry.get_identifier(name) {
+                Some(IdentifierValue::Number(num)) => Ok(Token::Number(NumberBody::from(num))),
+
+                Some(IdentifierValue::Function(func)) => Ok(Token::Number(
+                    NumberBody::from(func.value()?))),
+
+                None => Err(EvaluationError::UnknownIdentifier(name.clone())),
+            },
+            Token::CloseParen | Token::Eof => Err(EvaluationError::InvalidTokenPlace(self.to_string())),
         }
     }
 
-    fn led(&self, evaluator: &mut Evaluator, left: &Token) -> Option<Token> {
+    fn led(&self, evaluator: &mut Evaluator, left: &Token) -> Result<Token, EvaluationError> {
         match self {
             Token::Operation(op) => op.default_led(evaluator, left),
-            _ => None,
+            _ => Err(EvaluationError::MissingOperand),
         }
     }
 
