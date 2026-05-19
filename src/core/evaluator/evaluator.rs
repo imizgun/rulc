@@ -6,15 +6,15 @@ use crate::core::registries::identifiers_registry::IdentifiersRegistry;
 
 pub struct Evaluator<'a> {
     cursor: usize,
-    tokens: Vec<Token>,
+    tokens: &'a [Token],
     pub identifier_registry: &'a IdentifiersRegistry
 }
 
 impl Evaluator<'_> {
-    pub fn new(tokens: Vec<Token>, identifiers_registry: &'_ IdentifiersRegistry) -> Evaluator<'_> {
+    pub fn new<'a>(tokens: &'a [Token], identifiers_registry: &'a IdentifiersRegistry) -> Evaluator<'a> {
         Evaluator {
             cursor: 0,
-            tokens,
+            tokens: &tokens,
             identifier_registry: identifiers_registry }
     }
 

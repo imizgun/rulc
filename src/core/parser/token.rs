@@ -4,6 +4,7 @@ use crate::core::operations::operation::Operation;
 use crate::core::parser::numeric::number_body::NumberBody;
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::Arc;
+use crate::core::parser::identifier_value::IdentifierValue;
 
 #[derive(Clone)]
 pub enum Token {
@@ -35,7 +36,10 @@ impl EvaluationRule for Token {
                 Some(Token::Number(NumberBody::from(result)))
             }
             Token::Variable(str) => Some(Token::Number(
-                NumberBody::from(evaluator.identifier_registry.get_identifier(str)?))),
+                NumberBody::from(match evaluator.identifier_registry.get_identifier(str)? {
+                    IdentifierValue::Number(num) => num,
+                    _ => return None
+                }))),
             Token::CloseParen | Token::Eof => None,
         }
     }

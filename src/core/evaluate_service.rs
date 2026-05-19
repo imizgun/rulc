@@ -1,5 +1,6 @@
 use crate::core::core_initializer::CoreInitializer;
 use crate::core::evaluator::evaluator::Evaluator;
+use crate::core::parser::identifier_value::IdentifierValue;
 use crate::core::parser::statement::Statement;
 use crate::core::runtime_error::RuntimeError;
 
@@ -22,16 +23,19 @@ impl EvaluateService {
 
         match statement {
             Statement::Expression(tokens) => {
-                let mut evaluator = Evaluator::new(tokens, self.core.identifiers_registry());
+                let mut evaluator = Evaluator::new(&tokens, self.core.identifiers_registry());
                 Ok(evaluator.run()?)
             }
             Statement::Assignment { name, tokens } => {
                 let value = {
-                    let mut evaluator = Evaluator::new(tokens, self.core.identifiers_registry());
-                    evaluator.run()?
+                    let mut evaluator = Evaluator::new(&tokens, self.core.identifiers_registry());
+                    IdentifierValue::Number(evaluator.run()?)
                 };
-                self.core.identifiers_registry_mut().register_identifier(&name, value);
-                Ok(value)
+                self.core.identifiers_registry_mut().register_identifier(&name, &value);
+                Ok(match value { 
+                    IdentifierValue::Number(value) => value,
+                    IdentifierValue::Function(function) => function.value(self.core.identifiers_registry())?
+                })
             }
         }
     }
