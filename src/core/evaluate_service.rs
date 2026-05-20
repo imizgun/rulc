@@ -1,7 +1,7 @@
 use crate::core::core_initializer::CoreInitializer;
 use crate::core::evaluator::evaluator::Evaluator;
 use crate::core::evaluator::evaluator_result::Value;
-use crate::core::parser::identifier_value::IdentifierValue;
+use crate::core::parser::identifier_value::{FunctionIdentifier, IdentifierValue};
 use crate::core::parser::statement::Statement;
 use crate::core::repl_output::ReplOutput;
 use crate::core::runtime_error::RuntimeError;
@@ -36,6 +36,12 @@ impl EvaluateService {
                 self.core.identifiers_registry_mut()
                     .register_identifier(&name, &IdentifierValue::Number(num));
                 Ok(ReplOutput::Message(format!("{} = {}", name, num)))
+            }
+            Statement::FunctionDefinition { name, params, body } => {
+                let func = FunctionIdentifier::new(params, body);
+                self.core.identifiers_registry_mut()
+                    .register_identifier(&name, &IdentifierValue::Function(func));
+                Ok(ReplOutput::Message(format!("function '{}' defined", name)))
             }
         }
     }

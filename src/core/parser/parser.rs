@@ -29,24 +29,32 @@ impl Parser<'_> {
             .map(|t| t.to_string())
             .collect();
 
+        // Function definition: f(x, y) = body
+        if let (Some(RawToken::Identifier(name)), Some(RawToken::Operator(paren))) =
+            (sliced.get(0), sliced.get(1))
+        {
+            if paren == "(" {
+                if let Some(stmt) = self.try_parse_function_def(name, &sliced, &display_tokens)? {
+                    return Ok(stmt);
+                }
+            }
+        }
+
+        // Variable assignment: x = expr  or  x += expr
         if let (Some(RawToken::Identifier(name)), Some(RawToken::Operator(op))) =
             (sliced.get(0), sliced.get(1))
         {
             if op == "=" {
                 let name = name.clone();
-                let rhs = &sliced[2..];
-                let tokens = self.parse_raw_tokens(rhs, &display_tokens, 2)?;
+                let tokens = self.parse_raw_tokens(&sliced[2..], &display_tokens, 2)?;
                 return Ok(Statement::Assignment { name, tokens });
-            }
-            else if op.ends_with("=") {
+            } else if op.ends_with("=") {
                 let base_sign = op[..op.len() - 1].trim();
-
                 if self.operation_registry.get(base_sign).is_some() {
-                    let expanded_rhs = &mut sliced[2..].to_vec();
-                    expanded_rhs.insert(0, RawToken::Operator(base_sign.to_string()));
-                    expanded_rhs.insert(0, RawToken::Identifier(name.clone()));
-
-                    let tokens = self.parse_raw_tokens(expanded_rhs, &display_tokens, 2)?;
+                    let mut expanded = sliced[2..].to_vec();
+                    expanded.insert(0, RawToken::Operator(base_sign.to_string()));
+                    expanded.insert(0, RawToken::Identifier(name.clone()));
+                    let tokens = self.parse_raw_tokens(&expanded, &display_tokens, 2)?;
                     return Ok(Statement::Assignment { name: name.clone(), tokens });
                 }
             }
@@ -56,6 +64,43 @@ impl Parser<'_> {
         Ok(Statement::Expression(tokens))
     }
 
+    fn try_parse_function_def(
+        &self,
+        name: &str,
+        sliced: &[RawToken],
+        display_tokens: &[String],
+    ) -> Result<Option<Statement>, Located<ParseError>> {
+        // sliced[0] = Identifier(name), sliced[1] = Operator("(")
+        // Find first ")" — params are flat identifiers, no nesting
+        let Some(close_pos) = sliced[2..].iter()
+            .position(|t| matches!(t, RawToken::Operator(op) if op == ")"))
+            .map(|p| p + 2)
+        else {
+            return Ok(None);
+        };
+
+        // Must be followed by "="
+        let Some(RawToken::Operator(eq)) = sliced.get(close_pos + 1) else {
+            return Ok(None);
+        };
+        if eq != "=" {
+            return Ok(None);
+        }
+
+        // Extract parameter names from sliced[2..close_pos]
+        let mut params = Vec::new();
+        for token in &sliced[2..close_pos] {
+            match token {
+                RawToken::Identifier(p) => params.push(p.clone()),
+                RawToken::Operator(op) if op == "," => {}
+                _ => return Ok(None),
+            }
+        }
+
+        let body = self.parse_raw_tokens(&sliced[close_pos + 2..], display_tokens, close_pos + 2)?;
+        Ok(Some(Statement::FunctionDefinition { name: name.to_string(), params, body }))
+    }
+
     fn parse_raw_tokens(
         &self,
         raw_tokens: &[RawToken],
@@ -63,16 +108,82 @@ impl Parser<'_> {
         offset: usize,
     ) -> Result<Vec<Token>, Located<ParseError>> {
         let mut tokens = Vec::new();
-        for (i, raw) in raw_tokens.iter().enumerate() {
-            match self.parse_raw_token(raw) {
+        let mut i = 0;
+
+        while i < raw_tokens.len() {
+            // Function call: Identifier followed by "("
+            if let (RawToken::Identifier(name), Some(RawToken::Operator(paren))) =
+                (&raw_tokens[i], raw_tokens.get(i + 1))
+            {
+                if paren == "(" {
+                    let args_start = i + 2;
+                    let (args, consumed) = self.parse_call_args(
+                        &raw_tokens[args_start..],
+                        display_tokens,
+                        offset + args_start,
+                    )?;
+                    tokens.push(Token::FunctionCall { name: name.clone(), args });
+                    i += 2 + consumed;
+                    continue;
+                }
+            }
+
+            match self.parse_raw_token(&raw_tokens[i]) {
                 Ok(t) => tokens.push(t),
                 Err(err) => {
                     let ctx = ErrorContext::new(display_tokens.to_vec(), offset + i);
                     return Err(Located::new(err, ctx));
                 }
             }
+            i += 1;
         }
+
         Ok(tokens)
+    }
+
+    // Returns (parsed args, tokens consumed including the closing ")")
+    fn parse_call_args(
+        &self,
+        raw_tokens: &[RawToken],
+        display_tokens: &[String],
+        offset: usize,
+    ) -> Result<(Vec<Vec<Token>>, usize), Located<ParseError>> {
+        let mut args: Vec<Vec<Token>> = Vec::new();
+        let mut current: Vec<RawToken> = Vec::new();
+        let mut depth = 0usize;
+
+        for (i, token) in raw_tokens.iter().enumerate() {
+            match token {
+                RawToken::Operator(op) if op == "(" => {
+                    depth += 1;
+                    current.push(token.clone());
+                }
+                RawToken::Operator(op) if op == ")" => {
+                    if depth == 0 {
+                        if !current.is_empty() {
+                            let mut arg_tokens = self.parse_raw_tokens(&current, display_tokens, offset)?;
+                            arg_tokens.push(Token::Eof);
+                            args.push(arg_tokens);
+                        }
+                        return Ok((args, i + 1));
+                    }
+                    depth -= 1;
+                    current.push(token.clone());
+                }
+                RawToken::Operator(op) if op == "," && depth == 0 => {
+                    let mut arg_tokens = self.parse_raw_tokens(&current, display_tokens, offset)?;
+                    arg_tokens.push(Token::Eof);
+                    args.push(arg_tokens);
+                    current.clear();
+                }
+                _ => current.push(token.clone()),
+            }
+        }
+
+        Err(Located::new(
+            ParseError::UnmatchedParen,
+            ErrorContext::new(display_tokens.to_vec(), offset),
+        ))
     }
 
     fn parse_raw_token(&self, raw_token: &RawToken) -> Result<Token, ParseError> {

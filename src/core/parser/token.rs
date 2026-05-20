@@ -1,17 +1,18 @@
 use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluation_rule::EvaluationRule;
 use crate::core::evaluator::evaluator::Evaluator;
+use crate::core::evaluator::evaluator_result::Value;
 use crate::core::operations::operation::Operation;
+use crate::core::parser::identifier_value::IdentifierValue;
 use crate::core::parser::numeric::number_body::NumberBody;
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::Arc;
-use crate::core::evaluator::evaluator_result::Value;
-use crate::core::parser::identifier_value::IdentifierValue;
 
 #[derive(Clone)]
 pub enum Token {
     Number(NumberBody),
     Variable(String),
+    FunctionCall { name: String, args: Vec<Vec<Token>> },
     Operation(Arc<dyn Operation>),
     OpenParen,
     CloseParen,
@@ -42,12 +43,34 @@ impl EvaluationRule for Token {
             }
             Token::Variable(name) => match evaluator.identifier_registry.get_identifier(name) {
                 Some(IdentifierValue::Number(num)) => Ok(Token::Number(NumberBody::from(num))),
-
-                Some(IdentifierValue::Function(func)) => Ok(Token::Number(
-                    NumberBody::from(func.value()?))),
-
+                Some(IdentifierValue::Function(_)) => Err(EvaluationError::InvalidTokenPlace(
+                    format!("'{}' is a function, use {}(...) to call it", name, name)
+                )),
                 None => Err(EvaluationError::UnknownIdentifier(name.clone())),
             },
+            Token::FunctionCall { name, args } => {
+                match evaluator.identifier_registry.get_identifier(name) {
+                    Some(IdentifierValue::Function(func)) => {
+                        let mut arg_values = Vec::with_capacity(args.len());
+                        for arg_tokens in args {
+                            match Evaluator::new(arg_tokens, evaluator.identifier_registry)
+                                .run()
+                                .map_err(|e| e.error)?
+                            {
+                                Value::Numeric(n) => arg_values.push(n),
+                                other => return Err(EvaluationError::InvalidTokenPlace(other.to_string())),
+                            }
+                        }
+                        func.value(&arg_values, evaluator.identifier_registry)
+                            .map_err(|e| e.error)
+                            .map(|n| Token::Number(NumberBody::from(n)))
+                    }
+                    Some(IdentifierValue::Number(_)) => Err(EvaluationError::InvalidTokenPlace(
+                        format!("'{}' is a number, not a function", name)
+                    )),
+                    None => Err(EvaluationError::UnknownIdentifier(name.clone())),
+                }
+            }
             Token::CloseParen | Token::Eof => Err(EvaluationError::InvalidTokenPlace(self.to_string())),
         }
     }
@@ -72,6 +95,16 @@ impl Display for Token {
         match self {
             Token::Number(b) => write!(f, "{}", b.raw),
             Token::Variable(v) => write!(f, "{}", v),
+            Token::FunctionCall { name, args } => {
+                let args_str: Vec<String> = args.iter()
+                    .map(|arg| arg.iter()
+                        .filter(|t| !matches!(t, Token::Eof))
+                        .map(|t| t.to_string())
+                        .collect::<Vec<_>>()
+                        .join(" "))
+                    .collect();
+                write!(f, "{}({})", name, args_str.join(", "))
+            }
             Token::Operation(op) => write!(f, "{}", op.get_sign()),
             Token::OpenParen => write!(f, "("),
             Token::CloseParen => write!(f, ")"),
