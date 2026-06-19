@@ -4,6 +4,7 @@ use std::fmt::Display;
 pub enum Value {
     Numeric(f64),
     Boolean(bool),
+    Message(String)
 }
 
 impl Display for Value {
@@ -11,6 +12,7 @@ impl Display for Value {
         match self {
             Value::Numeric(n) => write!(f, "{}", n),
             Value::Boolean(b) => write!(f, "{}", b),
+            Value::Message(m) => write!(f, "{}", m)
         }
     }
 }

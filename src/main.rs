@@ -1,49 +1,48 @@
+use crate::mode::Mode;
+use crate::mode::Mode::{Repl, Tui};
+use crate::mode_error::ModeError;
+use crate::view::inline::InlineView;
+use crate::view::repl::ReplView;
+use crate::view::tui::TuiView;
+use crate::view::viewable::Viewable;
+
 mod core;
-use std::io::Write;
-use colored::Colorize;
-use crate::core::evaluate_service::EvaluateService;
+mod view;
+mod mode;
+pub mod mode_error;
 
 fn main() {
-    print_start_message();
+    let args: Vec<String> = std::env::args().collect();
 
-    let mut eval_service = EvaluateService::new();
-
-    loop {
-        let mut str = String::new();
-
-        print!("> ");
-        _ = std::io::stdout().flush();
-        
-        _ = std::io::stdin()
-            .read_line(&mut str)
-            .unwrap();
-
-        if str.trim().is_empty() {
-            continue
+    let view: Box<dyn Viewable> = match parse_args(&args) { 
+        Ok(v) => match v { 
+            Repl => Box::new(ReplView),
+            Tui => Box::new(TuiView),
+            Mode::Inline(x) => Box::new(InlineView {expression: x}) 
+        },
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
         }
+    };
+    
+    view.run();
+}
 
-        let res = eval_service.evaluate(&str);
-
-        match res {
-            Ok(res) => println!("{} {}",
-                                get_invite().green().bold(),
-                                res.to_string().green().bold()),
-
-            Err(error) => println!("{} {}",
-                                   get_invite().red().bold(),
-                                   error.to_string().red().bold())
-        }
-
-        println!();
+fn parse_args(args: &[String]) -> Result<Mode, ModeError> {
+    if args.len() == 1 {
+        return Ok(Mode::Repl);
     }
-}
-
-fn get_invite() -> String {
-    ">>".to_string()
-}
-
-fn print_start_message() {
-    println!("\n{} {}\n",
-             "Welcome to rulc!".green(),
-             format!("Version: {}", env!("CARGO_PKG_VERSION")).bold());
+    match args[1].as_str() {
+        "--tui" => Ok(Mode::Tui),
+        "--exec" => {
+            if args.len() != 3 {
+                Err(ModeError::NoExpressionProvided)
+            }
+            else {
+                Ok(Mode::Inline(args[2].to_string()))
+            }
+        },
+        _ => Err(ModeError::UnknownCommand)
+    }
 }

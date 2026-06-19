@@ -7,4 +7,4 @@ pub mod core_initializer;
 pub mod evaluate_service;
 pub mod error_display;
 pub mod repl_output;
-mod runtime_error;
+pub mod runtime_error;

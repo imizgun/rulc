@@ -2,6 +2,7 @@ use crate::core::error_display::{ErrorContext, Located};
 use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluation_rule::EvaluationRule;
 use crate::core::evaluator::evaluator_result::Value;
+use crate::core::parser::identifier_value::IdentifierValue;
 use crate::core::parser::token::Token;
 use crate::core::registries::identifiers_registry::IdentifiersRegistry;
 
@@ -20,6 +21,14 @@ impl Evaluator<'_> {
     }
 
     pub fn run(&mut self) -> Result<Value, Located<EvaluationError>> {
+        if self.tokens.len() - 1 == 1 {
+            if let Token::Variable(name) = &self.tokens[0] {
+                if let Some(IdentifierValue::Function(func)) = self.identifier_registry.get_identifier(name) {
+                    return Ok(Value::Message(format!("function {}({:?}) = {:?}", name, func.parameters, func.function_body)));
+                }
+            }
+        }
+
         let result = self.evaluate(0)?;
 
         if !matches!(self.tokens[self.cursor], Token::Eof) {
