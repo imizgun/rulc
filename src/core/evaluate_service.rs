@@ -3,6 +3,7 @@ use crate::core::evaluator::evaluator::Evaluator;
 use crate::core::evaluator::evaluator_result::Value;
 use crate::core::parser::identifier_value::{FunctionIdentifier, IdentifierValue};
 use crate::core::parser::statement::Statement;
+use crate::core::registries::identifiers_registry::IdentifiersRegistry;
 use crate::core::repl_output::ReplOutput;
 use crate::core::runtime_error::RuntimeError;
 
@@ -15,6 +16,10 @@ impl EvaluateService {
         EvaluateService {
             core: CoreInitializer::new(),
         }
+    }
+
+    pub fn identifiers_registry(&self) -> &IdentifiersRegistry {
+        self.core.identifiers_registry()
     }
 
     pub fn evaluate(&mut self, string: &str) -> Result<ReplOutput, RuntimeError> {

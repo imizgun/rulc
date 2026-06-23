@@ -1,3 +1,4 @@
+use std::fmt::{Display, Formatter};
 use crate::core::error_display::Located;
 use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluator::Evaluator;
@@ -9,6 +10,15 @@ use crate::core::registries::identifiers_registry::IdentifiersRegistry;
 pub enum IdentifierValue {
     Number(f64),
     Function(FunctionIdentifier)
+}
+
+impl Display for IdentifierValue {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            IdentifierValue::Number(n) => write!(f, "{n}"),
+            IdentifierValue::Function(func) => write!(f, "fn({})", func.parameters.join(", ")),
+        }
+    }
 }
 
 #[derive(Clone)]

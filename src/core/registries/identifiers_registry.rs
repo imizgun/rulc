@@ -20,4 +20,10 @@ impl IdentifiersRegistry {
     pub fn register_identifier(&mut self, identifier: &str, value: &IdentifierValue) {
         self.identifiers.insert(identifier.to_owned(), value.clone());
     }
+
+    pub fn entries(&self) -> Vec<(&String, &IdentifierValue)> {
+        let mut entries: Vec<_> = self.identifiers.iter().collect();
+        entries.sort_by(|a, b| a.0.cmp(b.0));
+        entries
+    }
 }
