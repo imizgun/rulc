@@ -3,7 +3,7 @@
 
 ## Usage
 - `git clone <this repo>`
-- `cargo run`
+- `cargo run | cargo run -- --exec <math expression here> | cargo run -- --tui`
 
 ## Project structure 
 ```
@@ -14,6 +14,7 @@
 └── ├── parser              // parses tokenized input
 └── ├── ├── numeric         // parses numeric expressions
 └── ├── registries          // registries for identifiers and operation 
+└── view                    // program modes (inline, REPL, TUI) 
 └── main.rs                 // program entry point
 ```
 
