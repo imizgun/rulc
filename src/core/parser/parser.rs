@@ -67,13 +67,6 @@ impl Parser<'_> {
             }
         }
 
-        // draw <func> in [x, y]
-        if let Some(RawToken::Identifier(name)) = sliced.get(0) {
-            if name == "draw" {
-
-            }
-        }
-
         let tokens = self.parse_raw_tokens(&sliced, &display_tokens, 0)?;
         Ok(Statement::Expression(tokens))
     }
@@ -102,7 +95,8 @@ impl Parser<'_> {
             .map(|p| p + 3)
             .ok_or_else(syntax_err)?;
 
-        let from_tokens = self.parse_raw_tokens(&sliced[3..to_pos], display_tokens, 3)?;
+        let mut from_tokens = self.parse_raw_tokens(&sliced[3..to_pos], display_tokens, 3)?;
+        from_tokens.push(Token::Eof);
         let to_tokens = self.parse_raw_tokens(&sliced[to_pos + 1..], display_tokens, to_pos + 1)?;
 
         Ok(Statement::DrawCommand { function_name, from_tokens, to_tokens })
