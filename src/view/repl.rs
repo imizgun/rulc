@@ -28,11 +28,14 @@ impl ReplView {
                 res.to_string().green().bold()
             ),
 
-            Err(error) => println!(
-                "{} {}",
-                ReplView::get_invite().red().bold(),
-                error.to_string().red().bold()
-            ),
+            Err(error) => {
+                let lines = error.display_lines();
+                println!(
+                    "{} {}",
+                    ReplView::get_invite().red().bold(),
+                    format!("{}\n   {}", lines.formatted_tokens, lines.error).red().bold()
+                )
+            },
         }
     }
 }

@@ -5,8 +5,8 @@ use crate::view::viewable::Viewable;
 use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, MouseEventKind};
 use ratatui::layout::{Constraint, Layout};
 use ratatui::style::{Color, Style};
-use ratatui::text::Line;
-use ratatui::widgets::{Block, Borders, Chart, Dataset, Paragraph};
+use ratatui::text::{Line, Span};
+use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Paragraph};
 
 pub struct TuiView;
 
@@ -16,6 +16,7 @@ struct App {
     history: Vec<Line<'static>>,
     history_scroll: u16,
     history_viewport_height: u16,
+    plot: Option<Vec<(f64, f64)>>,
 }
 
 impl App {
@@ -27,8 +28,18 @@ impl App {
             return;
         }
 
-        self.history.push(Line::from(format!(">> {input}")));
-        self.history.push(format_result(self.service.evaluate(&input)));
+        self.history.push(Line::from(format!("{INPUT_PREFIX}{input}")));
+
+        match self.service.evaluate(&input) {
+            Ok(ReplOutput::FuncPoints { points }) => {
+                self.plot = Some(points);
+                self.history.push(
+                    Line::from(format!("{INPUT_PREFIX}plot updated"))
+                        .style(Style::new().fg(Color::Cyan)),
+                );
+            }
+            other => self.history.extend(format_result(other)),
+        }
 
         self.history_scroll = self.max_scroll();
     }
@@ -43,10 +54,24 @@ impl App {
     }
 }
 
-fn format_result(res: Result<ReplOutput, RuntimeError>) -> Line<'static> {
+const INPUT_PREFIX: &str = ">> ";
+const OUTPUT_INDENT: &str = "   ";
+
+fn format_result(res: Result<ReplOutput, RuntimeError>) -> Vec<Line<'static>> {
     match res {
-        Ok(out) => Line::from(out.to_string()).style(Style::new().fg(Color::Green)),
-        Err(err) => Line::from(err.to_string()).style(Style::new().fg(Color::Red)),
+        Ok(out) => vec![
+            Line::from(format!("{INPUT_PREFIX}{out}"))
+                .style(Style::new().fg(Color::Green)),
+        ],
+        Err(err) => {
+            let lines = err.display_lines();
+            vec![
+                Line::from(format!("{INPUT_PREFIX}{}", lines.formatted_tokens))
+                    .style(Style::new().fg(Color::Red)),
+                Line::from(format!("{OUTPUT_INDENT}{}", lines.error))
+                    .style(Style::new().fg(Color::Red)),
+            ]
+        }
     }
 }
 
@@ -61,6 +86,7 @@ impl Viewable for TuiView {
             history: Vec::new(),
             history_scroll: 0,
             history_viewport_height: 0,
+            plot: None,
         };
 
         loop {
@@ -99,8 +125,9 @@ fn draw(frame: &mut ratatui::Frame, app: &mut App) {
         Layout::horizontal([Constraint::Percentage(60), Constraint::Percentage(40)])
             .areas(bottom_area);
 
-    let [history_area, input_area] = Layout::vertical([Constraint::Percentage(80), Constraint::Percentage(20)])
-        .areas(repl_area);
+    let [history_area, input_area] =
+        Layout::vertical([Constraint::Percentage(80), Constraint::Percentage(20)])
+            .areas(repl_area);
 
     app.history_viewport_height = history_area.height.saturating_sub(2);
     app.history_scroll = app.history_scroll.min(app.max_scroll());
@@ -110,11 +137,7 @@ fn draw(frame: &mut ratatui::Frame, app: &mut App) {
         .scroll((app.history_scroll, 0));
 
     frame.render_widget(history, history_area);
-
-    let plot = Chart::new(Vec::from([Dataset::default()]))
-        .block(Block::new().borders(Borders::ALL).title("rulc"));
-
-    frame.render_widget(plot, plot_area);
+    frame.render_widget(build_chart(&app.plot), plot_area);
 
     let input = Paragraph::new(app.input.as_str())
         .block(Block::new().borders(Borders::ALL).title("input"));
@@ -137,4 +160,48 @@ fn draw(frame: &mut ratatui::Frame, app: &mut App) {
         .block(Block::new().borders(Borders::ALL).title("memory"));
 
     frame.render_widget(memory, memory_area);
+}
+
+fn build_chart(plot: &Option<Vec<(f64, f64)>>) -> Chart<'_> {
+    let block = Block::new().borders(Borders::ALL).title("plot");
+
+    let Some(points) = plot else {
+        return Chart::new(vec![]).block(block);
+    };
+
+    if points.is_empty() {
+        return Chart::new(vec![]).block(block);
+    }
+
+    let x_min = points.iter().map(|(x, _)| *x).fold(f64::INFINITY, f64::min);
+    let x_max = points.iter().map(|(x, _)| *x).fold(f64::NEG_INFINITY, f64::max);
+    let y_min = points.iter().map(|(_, y)| *y).fold(f64::INFINITY, f64::min);
+    let y_max = points.iter().map(|(_, y)| *y).fold(f64::NEG_INFINITY, f64::max);
+
+    let y_pad = ((y_max - y_min) * 0.1).max(1.0);
+    let y_bounds = [y_min - y_pad, y_max + y_pad];
+
+    let curve = Dataset::default()
+        .data(points)
+        .graph_type(GraphType::Line)
+        .style(Style::new().fg(Color::Green));
+
+    Chart::new(vec![curve])
+        .block(block)
+        .x_axis(
+            Axis::default()
+                .bounds([x_min, x_max])
+                .labels(vec![
+                    Span::from(format!("{x_min:.1}")),
+                    Span::from(format!("{x_max:.1}")),
+                ]),
+        )
+        .y_axis(
+            Axis::default()
+                .bounds(y_bounds)
+                .labels(vec![
+                    Span::from(format!("{:.1}", y_bounds[0])),
+                    Span::from(format!("{:.1}", y_bounds[1])),
+                ]),
+        )
 }

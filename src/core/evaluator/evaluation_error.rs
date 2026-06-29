@@ -8,7 +8,6 @@ pub enum EvaluationError {
     MissingOperator,
     ArityMismatch(usize, usize),
     UnknownIdentifier(String),
-    
 }
 
 impl Display for EvaluationError {

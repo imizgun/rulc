@@ -29,6 +29,13 @@ impl Parser<'_> {
             .map(|t| t.to_string())
             .collect();
 
+        // Draw command: draw f from <expr> to <expr>
+        if let Some(RawToken::Identifier(keyword)) = sliced.get(0) {
+            if keyword == "draw" {
+                return self.parse_draw(&sliced, &display_tokens);
+            }
+        }
+
         // Function definition: f(x, y) = body
         if let (Some(RawToken::Identifier(name)), Some(RawToken::Operator(paren))) =
             (sliced.get(0), sliced.get(1))
@@ -60,8 +67,45 @@ impl Parser<'_> {
             }
         }
 
+        // draw <func> in [x, y]
+        if let Some(RawToken::Identifier(name)) = sliced.get(0) {
+            if name == "draw" {
+
+            }
+        }
+
         let tokens = self.parse_raw_tokens(&sliced, &display_tokens, 0)?;
         Ok(Statement::Expression(tokens))
+    }
+
+    fn parse_draw(
+        &self,
+        sliced: &[RawToken],
+        display_tokens: &[String],
+    ) -> Result<Statement, Located<ParseError>> {
+        let syntax_err = || Located::unlocated(ParseError::InvalidSyntax(
+            "expected: draw <func> from <expr> to <expr>".to_string()
+        ));
+
+        let function_name = match sliced.get(1) {
+            Some(RawToken::Identifier(name)) => name.clone(),
+            _ => return Err(syntax_err()),
+        };
+
+        match sliced.get(2) {
+            Some(RawToken::Identifier(kw)) if kw == "from" => {}
+            _ => return Err(syntax_err()),
+        }
+
+        let to_pos = sliced[3..].iter()
+            .position(|t| matches!(t, RawToken::Identifier(kw) if kw == "to"))
+            .map(|p| p + 3)
+            .ok_or_else(syntax_err)?;
+
+        let from_tokens = self.parse_raw_tokens(&sliced[3..to_pos], display_tokens, 3)?;
+        let to_tokens = self.parse_raw_tokens(&sliced[to_pos + 1..], display_tokens, to_pos + 1)?;
+
+        Ok(Statement::DrawCommand { function_name, from_tokens, to_tokens })
     }
 
     fn try_parse_function_def(

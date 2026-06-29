@@ -5,6 +5,7 @@ pub enum ParseError {
     UnknownOperator(String),
     InvalidNumber(String),
     UnmatchedParen,
+    InvalidSyntax(String),
 }
 
 impl Display for ParseError {
@@ -13,6 +14,7 @@ impl Display for ParseError {
             ParseError::UnknownOperator(op) => write!(f, "unknown operator: '{}'", op),
             ParseError::InvalidNumber(n) => write!(f, "invalid number: '{}'", n),
             ParseError::UnmatchedParen => write!(f, "unmatched parenthesis"),
+            ParseError::InvalidSyntax(msg) => write!(f, "invalid syntax: {}", msg),
         }
     }
 }

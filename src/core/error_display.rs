@@ -11,6 +11,11 @@ pub struct Located<E> {
     pub context: ErrorContext,
 }
 
+pub struct LocatedErrorDisplay {
+    pub formatted_tokens: String,
+    pub error: String
+}
+
 impl ErrorContext {
     pub fn new(tokens: Vec<String>, index: usize) -> Self {
         ErrorContext { tokens, index }
@@ -27,20 +32,24 @@ impl<E> Located<E> {
     }
 }
 
-impl<E: Display> Display for Located<E> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+impl<E: Display> Located<E> {
+    pub fn get_lines(&self) -> LocatedErrorDisplay {
         let offset = self.context.tokens[..self.context.index]
             .iter()
             .map(|t| t.len() + 1)
             .sum::<usize>();
         
-        write!(
-            f,
-            "{}\n  ╰{}^ {}",
-            self.context.tokens.join(" "),
-            "—".repeat(offset),
-            self.error
-        )
+        LocatedErrorDisplay {
+            formatted_tokens: self.context.tokens.join(" "),
+            error: format!("╰{}^ {}", "—".repeat(offset - 1), self.error),
+        }
+    }
+}
+
+impl<E: Display> Display for Located<E> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let lines = self.get_lines();
+        write!(f, "{}\n{}", lines.formatted_tokens, lines.error)
     }
 }
 

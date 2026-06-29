@@ -4,6 +4,7 @@ use crate::core::evaluator::evaluator_result::Value;
 pub enum ReplOutput {
     Value(Value),
     Message(String),
+    FuncPoints{ points: Vec<(f64, f64)> },
 }
 
 impl Display for ReplOutput {
@@ -11,6 +12,7 @@ impl Display for ReplOutput {
         match self {
             ReplOutput::Value(v) => write!(f, "{}", v),
             ReplOutput::Message(m) => write!(f, "{}", m),
+            ReplOutput::FuncPoints{ points } => write!(f, "points"),
         }
     }
 }
