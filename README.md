@@ -1,5 +1,5 @@
 # rulc
-`rulc` is easy to use TUI REPL calculator with plot support (plots are in implementation)
+`rulc` is easy to use TUI REPL calculator with plot support
 
 ## Usage
 - `git clone <this repo>`

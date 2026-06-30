@@ -10,6 +10,16 @@ impl Lexer {
         let mut buffer = String::new();
 
         for ch in expression.chars() {
+            if matches!(ch, '(' | ')' | '[' | ']' | ',') {
+                if !buffer.is_empty() {
+                    raw.push(self.classify_raw_token(&state, &buffer));
+                    buffer.clear();
+                    state = LexerState::Idle;
+                }
+                raw.push(RawToken::Operator(ch.to_string()));
+                continue;
+            }
+
             let next_state = match ch {
                 '0'..='9' | '.' => LexerState::Number,
                 c if c.is_alphabetic() => LexerState::Identifier,

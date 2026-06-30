@@ -21,8 +21,11 @@ impl IdentifiersRegistry {
         self.identifiers.insert(identifier.to_owned(), value.clone());
     }
 
-    pub fn entries(&self) -> Vec<(&String, &IdentifierValue)> {
-        let mut entries: Vec<_> = self.identifiers.iter().collect();
+    pub fn user_entries(&self) -> Vec<(&String, &IdentifierValue)> {
+        let mut entries: Vec<_> = self.identifiers.iter()
+            .filter(|x| !matches!(x.1, IdentifierValue::Builtin(_)))
+            .collect();
+        
         entries.sort_by(|a, b| a.0.cmp(b.0));
         entries
     }

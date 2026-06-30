@@ -34,14 +34,21 @@ impl<E> Located<E> {
 
 impl<E: Display> Located<E> {
     pub fn get_lines(&self) -> LocatedErrorDisplay {
+        if self.context.tokens.is_empty() {
+            return LocatedErrorDisplay {
+                formatted_tokens: String::new(),
+                error: self.error.to_string(),
+            };
+        }
+
         let offset = self.context.tokens[..self.context.index]
             .iter()
             .map(|t| t.len() + 1)
             .sum::<usize>();
-        
+
         LocatedErrorDisplay {
             formatted_tokens: self.context.tokens.join(" "),
-            error: format!("╰{}^ {}", "—".repeat(offset - 1), self.error),
+            error: format!("╰{}^ {}", "—".repeat(offset.saturating_sub(1)), self.error),
         }
     }
 }

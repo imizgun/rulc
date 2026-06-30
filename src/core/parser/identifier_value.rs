@@ -7,16 +7,32 @@ use crate::core::parser::token::Token;
 use crate::core::registries::identifiers_registry::IdentifiersRegistry;
 
 #[derive(Clone)]
+pub enum BuiltinValue {
+    Constant(f64),
+    Function { arity: usize, func: fn(&[f64]) -> f64 },
+}
+
+#[derive(Clone)]
 pub enum IdentifierValue {
     Number(f64),
-    Function(FunctionIdentifier)
+    Function(FunctionIdentifier),
+    Builtin(BuiltinValue),
 }
 
 impl Display for IdentifierValue {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             IdentifierValue::Number(n) => write!(f, "{n}"),
-            IdentifierValue::Function(func) => write!(f, "fn({})", func.parameters.join(", ")),
+            IdentifierValue::Function(func) => write!(f, "fn({}) {}",
+                                                      func.parameters.join(", "),
+                                                      func.function_body.iter()
+                                                          .filter(|t| !matches!(t, Token::Eof))
+                                                          .map(|t| t.to_string())
+                                                          .collect::<Vec<_>>().join(" ")),
+            IdentifierValue::Builtin(BuiltinValue::Constant(n)) => write!(f, "{n}"),
+            IdentifierValue::Builtin(BuiltinValue::Function { arity, .. }) => {
+                write!(f, "<builtin/{arity}>")
+            }
         }
     }
 }

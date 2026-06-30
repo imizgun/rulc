@@ -1,5 +1,5 @@
-use std::io::Write;
 use colored::Colorize;
+use rustyline::DefaultEditor;
 use crate::core::evaluate_service::EvaluateService;
 use crate::core::repl_output::ReplOutput;
 use crate::core::runtime_error::RuntimeError;
@@ -45,24 +45,19 @@ impl Viewable for ReplView {
         ReplView::print_start_message();
 
         let mut eval_service = EvaluateService::new();
+        let mut rl = DefaultEditor::new().unwrap();
 
         loop {
-            let mut str = String::new();
-
-            print!("> ");
-            _ = std::io::stdout().flush();
-
-            _ = std::io::stdin().read_line(&mut str).unwrap();
-
-            if str.trim().is_empty() {
-                continue;
+            match rl.readline("> ") {
+                Ok(line) => {
+                    let trimmed = line.trim();
+                    if trimmed.is_empty() { continue; }
+                    rl.add_history_entry(trimmed).ok();
+                    ReplView::print_result(eval_service.evaluate(trimmed));
+                    println!();
+                }
+                Err(_) => break,
             }
-
-            let res = eval_service.evaluate(&str);
-
-            ReplView::print_result(res);
-
-            println!();
         }
     }
 }

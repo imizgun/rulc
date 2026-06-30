@@ -3,7 +3,7 @@ use crate::core::evaluator::evaluation_rule::EvaluationRule;
 use crate::core::evaluator::evaluator::Evaluator;
 use crate::core::evaluator::evaluator_result::Value;
 use crate::core::operations::operation::Operation;
-use crate::core::parser::identifier_value::IdentifierValue;
+use crate::core::parser::identifier_value::{BuiltinValue, IdentifierValue};
 use crate::core::parser::numeric::number_body::NumberBody;
 use std::fmt::{Debug, Display, Formatter};
 use std::sync::Arc;
@@ -28,6 +28,20 @@ impl Token {
     }
 }
 
+fn eval_args(args: &[Vec<Token>], evaluator: &mut Evaluator) -> Result<Vec<f64>, EvaluationError> {
+    let mut values = Vec::with_capacity(args.len());
+    for arg_tokens in args {
+        match Evaluator::new(arg_tokens, evaluator.identifier_registry)
+            .run()
+            .map_err(|e| e.error)?
+        {
+            Value::Numeric(n) => values.push(n),
+            other => return Err(EvaluationError::InvalidTokenPlace(other.to_string())),
+        }
+    }
+    Ok(values)
+}
+
 impl EvaluationRule for Token {
     fn nud(&self, evaluator: &mut Evaluator) -> Result<Token, EvaluationError> {
         match self {
@@ -43,31 +57,34 @@ impl EvaluationRule for Token {
             }
             Token::Variable(name) => match evaluator.identifier_registry.get_identifier(name) {
                 Some(IdentifierValue::Number(num)) => Ok(Token::Number(NumberBody::from(num))),
-                Some(IdentifierValue::Function(_)) => Err(EvaluationError::InvalidTokenPlace(
-                    format!("'{}' is a function, use {}(...) to call it", name, name)
-                )),
+                Some(IdentifierValue::Builtin(BuiltinValue::Constant(n))) => Ok(Token::Number(NumberBody::from(n))),
+                Some(IdentifierValue::Function(_)) | Some(IdentifierValue::Builtin(BuiltinValue::Function { .. })) => {
+                    Err(EvaluationError::InvalidTokenPlace(
+                        format!("'{}' is a function, use {}(...) to call it", name, name)
+                    ))
+                }
                 None => Err(EvaluationError::UnknownIdentifier(name.clone())),
             },
             Token::FunctionCall { name, args } => {
                 match evaluator.identifier_registry.get_identifier(name) {
                     Some(IdentifierValue::Function(func)) => {
-                        let mut arg_values = Vec::with_capacity(args.len());
-                        for arg_tokens in args {
-                            match Evaluator::new(arg_tokens, evaluator.identifier_registry)
-                                .run()
-                                .map_err(|e| e.error)?
-                            {
-                                Value::Numeric(n) => arg_values.push(n),
-                                other => return Err(EvaluationError::InvalidTokenPlace(other.to_string())),
-                            }
-                        }
+                        let mut arg_values = eval_args(args, evaluator)?;
                         func.value(&arg_values, evaluator.identifier_registry)
                             .map_err(|e| e.error)
                             .map(|n| Token::Number(NumberBody::from(n)))
                     }
-                    Some(IdentifierValue::Number(_)) => Err(EvaluationError::InvalidTokenPlace(
-                        format!("'{}' is a number, not a function", name)
-                    )),
+                    Some(IdentifierValue::Builtin(BuiltinValue::Function { arity, func })) => {
+                        if args.len() != arity {
+                            return Err(EvaluationError::ArityMismatch(arity, args.len()));
+                        }
+                        let arg_values = eval_args(args, evaluator)?;
+                        Ok(Token::Number(NumberBody::from(func(&arg_values))))
+                    }
+                    Some(IdentifierValue::Number(_)) | Some(IdentifierValue::Builtin(BuiltinValue::Constant(_))) => {
+                        Err(EvaluationError::InvalidTokenPlace(
+                            format!("'{}' is a number, not a function", name)
+                        ))
+                    }
                     None => Err(EvaluationError::UnknownIdentifier(name.clone())),
                 }
             }
