@@ -1,6 +1,6 @@
 # rulc
 `rulc` is easy to use TUI REPL calculator with plot support
-![pictures/img.png](img.png)
+![pictures/img.png](pictures/img.png)
 
 ## Usage
 - `git clone <this repo>`
