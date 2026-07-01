@@ -1,7 +1,7 @@
 # rulc
 ### Easy to use TUI REPL calculator with plot support
 
-![pictures/img.png](pictures/img.png)
+![pictures/img_1.png](pictures/img_1.png)
 
 ## Installation
 cargo: `cargo install rulc`
@@ -95,6 +95,32 @@ draw cos from -2*pi to 2*pi
 
 After entering a `draw` command the chart panel updates automatically. The x and y axes scale to fit the plotted range, and the zero axes are shown in gray when they fall within the visible area.
 
+Multiple `draw` commands layer their curves on the same chart, each in its own color (up to 5 plots at once; further `draw` commands are rejected until you `clear plots`). Points where a function is undefined (e.g. division by zero) are skipped instead of aborting the plot, and statistical outliers near an asymptote are filtered out so a single blown-up sample doesn't stretch the whole chart.
+
+## Finding intersections
+
+**Syntax:**
+```
+intersect <function> <function> from <expr> to <expr>
+```
+
+**Example:**
+```
+f(x) = x^2
+g(x) = x + 2
+intersect f g from -5 to 5
+```
+
+Both functions are sampled over the given range and checked for sign changes in their difference; the crossing is then linearly interpolated between samples for a more precise `(x, y)`. In REPL mode the found points are printed one per line. In TUI mode they're additionally marked on the chart and labeled `(x, y)` in the plot's legend.
+
+## Clearing
+
+| Command        | Effect                                          |
+| -------------- | ------------------------------------------------ |
+| `clear plots`  | Removes all plotted curves and intersection markers |
+| `clear output` | Clears the REPL/TUI output history                |
+| `clear`        | Both of the above                                 |
+
 ## Project structure 
 ```
 ├── core
@@ -112,3 +138,6 @@ After entering a `draw` command the chart panel updates automatically. The x and
 1. Tokenize the input using the lexer
 2. Parse the tokenized input using the parser
 3. Evaluate the parsed expression using the evaluator (Pratt expression parser)
+
+## License
+Licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later). See [LICENSE](LICENSE) for the full text.

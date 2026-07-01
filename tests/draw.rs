@@ -50,3 +50,16 @@ fn unknown_identifier_error() {
     let mut s = svc();
     assert!(s.evaluate("draw unknown from 0 to 1").is_err());
 }
+
+#[test]
+fn hyperbola_domain_gap_does_not_blow_up_range() {
+    let mut s = svc();
+    s.evaluate("f(x) = 1 / x").unwrap();
+    let pts = points(&mut s, "draw f from -5 to 5");
+    assert!(!pts.is_empty());
+    let y_max = pts.iter().map(|(_, y)| y.abs()).fold(0.0, f64::max);
+    assert!(
+        y_max < 1000.0,
+        "y_max was {y_max}, outlier filtering should have capped it"
+    );
+}

@@ -16,4 +16,13 @@ pub enum Statement {
         from_tokens: Vec<Token>,
         to_tokens: Vec<Token>,
     },
+    IntersectionCommand {
+        left_function_name: String,
+        right_function_name: String,
+        from_tokens: Vec<Token>,
+        to_tokens: Vec<Token>,
+    },
+    ClearPlots,
+    ClearOutput,
+    ClearAll
 }

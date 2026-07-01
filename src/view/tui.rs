@@ -7,10 +7,25 @@ use crossterm::event::{
 };
 use ratatui::layout::{Constraint, Layout};
 use ratatui::style::{Color, Style};
+use ratatui::symbols::Marker;
 use ratatui::text::{Line, Span};
 use ratatui::widgets::{Axis, Block, Borders, Chart, Dataset, GraphType, Paragraph};
 
 pub struct TuiView;
+
+const COLORS: &[Color] = &[
+    Color::Blue,
+    Color::Green,
+    Color::Red,
+    Color::Magenta,
+    Color::Cyan
+];
+const MAX_PLOTS: usize = COLORS.len();
+
+struct Plot {
+    pub points: Vec<(f64, f64)>,
+    pub color: Color
+}
 
 struct App {
     service: EvaluateService,
@@ -20,7 +35,8 @@ struct App {
     history: Vec<Line<'static>>,
     history_scroll: u16,
     history_viewport_height: u16,
-    plot: Option<Vec<(f64, f64)>>,
+    plot: Option<Vec<Plot>>,
+    intersections: Option<Vec<(f64, f64)>>,
     cmd_history: Vec<String>,
     cmd_cursor: Option<usize>,
 }
@@ -109,17 +125,66 @@ impl App {
             .push(Line::from(format!("{INPUT_PREFIX}{input}")));
 
         match self.service.evaluate(&input) {
-            Ok(ReplOutput::FuncPoints { points }) => {
-                self.plot = Some(points);
-                self.history.push(
-                    Line::from(format!("{INPUT_PREFIX}plot updated"))
-                        .style(Style::new().fg(Color::Cyan)),
-                );
+            Ok(ReplOutput::FuncPoints { points }) => self.add_plot(points),
+            Ok(ReplOutput::IntersectionPoints { points }) => self.set_intersections(points),
+            Ok(ReplOutput::ClearPlots) => self.clear_plots(),
+            Ok(ReplOutput::ClearHistory) => self.history.clear(),
+            Ok(ReplOutput::ClearAll) => {
+                self.clear_plots();
+                self.history.clear();
             }
             other => self.history.extend(format_result(other)),
         }
 
         self.history_scroll = self.max_scroll();
+    }
+
+    fn add_plot(&mut self, points: Vec<(f64, f64)>) {
+        let plots = self.plot.get_or_insert_with(Vec::new);
+
+        if plots.len() >= MAX_PLOTS {
+            self.history.push(
+                Line::from(format!("{INPUT_PREFIX}plot limit reached ({MAX_PLOTS}). Use `clear plots` command"))
+                    .style(Style::new().fg(Color::Red)),
+            );
+            return;
+        }
+
+        let color = COLORS[plots.len()];
+        plots.push(Plot { points, color });
+        self.history.push(
+            Line::from(format!("{INPUT_PREFIX}plot updated"))
+                .style(Style::new().fg(Color::Cyan)),
+        );
+    }
+
+    fn clear_plots(&mut self) {
+        self.plot = None;
+        self.intersections = None;
+
+        self.history.push(Line::from("plots were cleared"))
+    }
+
+    fn set_intersections(&mut self, points: Vec<(f64, f64)>) {
+        if points.is_empty() {
+            self.intersections = None;
+            self.history.push(
+                Line::from(format!("{INPUT_PREFIX}no intersection points found"))
+                    .style(Style::new().fg(Color::Yellow)),
+            );
+            return;
+        }
+
+        self.history.push(
+            Line::from(format!("{INPUT_PREFIX}{} intersection point(s):", points.len()))
+                .style(Style::new().fg(Color::Cyan)),
+        );
+        for (x, y) in &points {
+            self.history
+                .push(Line::from(format!("{OUTPUT_INDENT}({x:.4}, {y:.4})")));
+        }
+
+        self.intersections = Some(points);
     }
 
     fn max_scroll(&self) -> u16 {
@@ -129,6 +194,92 @@ impl App {
     fn scroll_by(&mut self, delta: i16) {
         let scroll = self.history_scroll as i16 + delta;
         self.history_scroll = scroll.clamp(0, self.max_scroll() as i16) as u16;
+    }
+
+    fn build_chart<'a>(
+        &'a self,
+        block: Block<'a>,
+        h_zero: &'a mut Vec<(f64, f64)>,
+        v_zero: &'a mut Vec<(f64, f64)>,
+    ) -> Chart<'a> {
+        let plots: &[Plot] = self.plot.as_deref().unwrap_or(&[]);
+        let intersections: &[(f64, f64)] = self.intersections.as_deref().unwrap_or(&[]);
+
+        if plots.is_empty() && intersections.is_empty() {
+            return Chart::new(vec![]).block(block);
+        }
+
+        let all_points = || {
+            plots
+                .iter()
+                .flat_map(|p| p.points.iter())
+                .chain(intersections.iter())
+        };
+        let x_min = all_points().map(|(x, _)| *x).fold(f64::INFINITY, f64::min);
+        let x_max = all_points()
+            .map(|(x, _)| *x)
+            .fold(f64::NEG_INFINITY, f64::max);
+        let y_min = all_points().map(|(_, y)| *y).fold(f64::INFINITY, f64::min);
+        let y_max = all_points()
+            .map(|(_, y)| *y)
+            .fold(f64::NEG_INFINITY, f64::max);
+        let y_pad = ((y_max - y_min) * 0.1).max(1.0);
+        let y_bounds = [y_min - y_pad, y_max + y_pad];
+
+        *h_zero = vec![(x_min, 0.0), (x_max, 0.0)];
+        *v_zero = vec![(0.0, y_bounds[0]), (0.0, y_bounds[1])];
+
+        let mut datasets: Vec<Dataset> = plots
+            .iter()
+            .map(|p| {
+                Dataset::default()
+                    .data(&p.points)
+                    .graph_type(GraphType::Line)
+                    .marker(Marker::Braille)
+                    .style(Style::new().fg(p.color))
+            })
+            .collect();
+
+        if y_bounds[0] <= 0.0 && 0.0 <= y_bounds[1] {
+            datasets.push(
+                Dataset::default()
+                    .data(&*h_zero)
+                    .graph_type(GraphType::Line)
+                    .marker(Marker::Braille)
+                    .style(Style::new().fg(Color::DarkGray)),
+            );
+        }
+        if x_min <= 0.0 && 0.0 <= x_max {
+            datasets.push(
+                Dataset::default()
+                    .data(&*v_zero)
+                    .graph_type(GraphType::Line)
+                    .marker(Marker::Braille)
+                    .style(Style::new().fg(Color::DarkGray)),
+            );
+        }
+
+        for (i, &(x, y)) in intersections.iter().enumerate() {
+            datasets.push(
+                Dataset::default()
+                    .data(&intersections[i..=i])
+                    .graph_type(GraphType::Scatter)
+                    .marker(Marker::Block)
+                    .style(Style::new().fg(Color::White))
+                    .name(format!("({x:.2}, {y:.2})")),
+            );
+        }
+
+        Chart::new(datasets)
+            .block(block)
+            .x_axis(Axis::default().bounds([x_min, x_max]).labels(vec![
+                Span::from(format!("{x_min:.1}")),
+                Span::from(format!("{x_max:.1}")),
+            ]))
+            .y_axis(Axis::default().bounds(y_bounds).labels(vec![
+                Span::from(format!("{:.1}", y_bounds[0])),
+                Span::from(format!("{:.1}", y_bounds[1])),
+            ]))
     }
 }
 
@@ -166,6 +317,7 @@ impl Viewable for TuiView {
             history_scroll: 0,
             history_viewport_height: 0,
             plot: None,
+            intersections: None,
             cmd_history: Vec::new(),
             cmd_cursor: None,
         };
@@ -222,60 +374,7 @@ fn draw(frame: &mut ratatui::Frame, app: &mut App) {
     let mut h_zero: Vec<(f64, f64)> = vec![];
     let mut v_zero: Vec<(f64, f64)> = vec![];
     let block = Block::new().borders(Borders::ALL).title("plot");
-    let chart = match &app.plot {
-        Some(points) if !points.is_empty() => {
-            let x_min = points.iter().map(|(x, _)| *x).fold(f64::INFINITY, f64::min);
-            let x_max = points
-                .iter()
-                .map(|(x, _)| *x)
-                .fold(f64::NEG_INFINITY, f64::max);
-            let y_min = points.iter().map(|(_, y)| *y).fold(f64::INFINITY, f64::min);
-            let y_max = points
-                .iter()
-                .map(|(_, y)| *y)
-                .fold(f64::NEG_INFINITY, f64::max);
-            let y_pad = ((y_max - y_min) * 0.1).max(1.0);
-            let y_bounds = [y_min - y_pad, y_max + y_pad];
-
-            h_zero = vec![(x_min, 0.0), (x_max, 0.0)];
-            v_zero = vec![(0.0, y_bounds[0]), (0.0, y_bounds[1])];
-
-            let curve = Dataset::default()
-                .data(points)
-                .graph_type(GraphType::Line)
-                .style(Style::new().fg(Color::Green));
-
-            let mut datasets = vec![curve];
-            if y_bounds[0] <= 0.0 && 0.0 <= y_bounds[1] {
-                datasets.push(
-                    Dataset::default()
-                        .data(&h_zero)
-                        .graph_type(GraphType::Line)
-                        .style(Style::new().fg(Color::DarkGray)),
-                );
-            }
-            if x_min <= 0.0 && 0.0 <= x_max {
-                datasets.push(
-                    Dataset::default()
-                        .data(&v_zero)
-                        .graph_type(GraphType::Line)
-                        .style(Style::new().fg(Color::DarkGray)),
-                );
-            }
-
-            Chart::new(datasets)
-                .block(block)
-                .x_axis(Axis::default().bounds([x_min, x_max]).labels(vec![
-                    Span::from(format!("{x_min:.1}")),
-                    Span::from(format!("{x_max:.1}")),
-                ]))
-                .y_axis(Axis::default().bounds(y_bounds).labels(vec![
-                    Span::from(format!("{:.1}", y_bounds[0])),
-                    Span::from(format!("{:.1}", y_bounds[1])),
-                ]))
-        }
-        _ => Chart::new(vec![]).block(block),
-    };
+    let chart = app.build_chart(block, &mut h_zero, &mut v_zero);
     frame.render_widget(chart, plot_area);
 
     let input =

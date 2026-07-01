@@ -37,6 +37,33 @@ impl Parser<'_> {
             }
         }
 
+        // Intersection command: intersect f1 f2 from <expr> to <expr>
+        if let Some(RawToken::Identifier(keyword)) = sliced.get(0) {
+            if keyword == "intersect" {
+                return self.parse_intersect(&sliced, &display_tokens);
+            }
+        }
+        
+        if let Some(RawToken::Identifier(clear_command)
+        ) = sliced.get(0) {
+            if clear_command == "clear" {
+                if let Some(target) = sliced.get(1) {
+                    match target {
+                        RawToken::Eof => return Ok(Statement::ClearAll),
+                        RawToken::Identifier(clear_target) => {
+                            return match clear_target.as_str() {
+                                "plots" => Ok(Statement::ClearPlots),
+                                "output" => Ok(Statement::ClearOutput),
+                                _ => Err(Located::new(ParseError::InvalidSyntax("invalid clear target".to_string()), 
+                                                      ErrorContext::new(sliced.iter().map(|x| x.to_string()).collect(), 1)))
+                            }
+                        }
+                        _ => unreachable!()
+                    }   
+                }
+            }
+        }
+
         // Function definition: f(x, y) = body
         if let (Some(RawToken::Identifier(name)), Some(RawToken::Operator(paren))) =
             (sliced.get(0), sliced.get(1))
@@ -108,6 +135,50 @@ impl Parser<'_> {
 
         Ok(Statement::DrawCommand {
             function_name,
+            from_tokens,
+            to_tokens,
+        })
+    }
+
+    fn parse_intersect(
+        &self,
+        sliced: &[RawToken],
+        display_tokens: &[String],
+    ) -> Result<Statement, Located<ParseError>> {
+        let syntax_err = || {
+            Located::unlocated(ParseError::InvalidSyntax(
+                "expected: intersect <func> <func> from <expr> to <expr>".to_string(),
+            ))
+        };
+
+        let left_function_name = match sliced.get(1) {
+            Some(RawToken::Identifier(name)) => name.clone(),
+            _ => return Err(syntax_err()),
+        };
+
+        let right_function_name = match sliced.get(2) {
+            Some(RawToken::Identifier(name)) => name.clone(),
+            _ => return Err(syntax_err()),
+        };
+
+        match sliced.get(3) {
+            Some(RawToken::Identifier(kw)) if kw == "from" => {}
+            _ => return Err(syntax_err()),
+        }
+
+        let to_pos = sliced[4..]
+            .iter()
+            .position(|t| matches!(t, RawToken::Identifier(kw) if kw == "to"))
+            .map(|p| p + 4)
+            .ok_or_else(syntax_err)?;
+
+        let mut from_tokens = self.parse_raw_tokens(&sliced[4..to_pos], display_tokens, 4)?;
+        from_tokens.push(Token::Eof);
+        let to_tokens = self.parse_raw_tokens(&sliced[to_pos + 1..], display_tokens, to_pos + 1)?;
+
+        Ok(Statement::IntersectionCommand {
+            left_function_name,
+            right_function_name,
             from_tokens,
             to_tokens,
         })

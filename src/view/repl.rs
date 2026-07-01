@@ -3,6 +3,8 @@ use crate::core::repl_output::ReplOutput;
 use crate::core::runtime_error::RuntimeError;
 use crate::view::viewable::Viewable;
 use colored::Colorize;
+use crossterm::cursor::MoveTo;
+use crossterm::terminal::{Clear, ClearType};
 use rustyline::DefaultEditor;
 
 pub struct ReplView;
@@ -22,6 +24,26 @@ impl ReplView {
 
     pub fn print_result(res: Result<ReplOutput, RuntimeError>) {
         match res {
+            Ok(ReplOutput::IntersectionPoints { points }) if points.is_empty() => println!(
+                "{} {}",
+                ReplView::get_invite().green().bold(),
+                "no intersection points found".green().bold()
+            ),
+            Ok(ReplOutput::IntersectionPoints { points }) => {
+                println!(
+                    "{} {}",
+                    ReplView::get_invite().green().bold(),
+                    format!("{} intersection point(s):", points.len())
+                        .green()
+                        .bold()
+                );
+                for (x, y) in &points {
+                    println!("   ({x:.4}, {y:.4})");
+                }
+            }
+            Ok(ReplOutput::ClearHistory) | Ok(ReplOutput::ClearAll) => {
+                crossterm::execute!(std::io::stdout(), Clear(ClearType::All), MoveTo(0, 0)).ok();
+            }
             Ok(res) => println!(
                 "{} {}",
                 ReplView::get_invite().green().bold(),
