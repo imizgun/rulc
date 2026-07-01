@@ -1,4 +1,4 @@
-use std::fmt::{write, Display, Formatter};
+use std::fmt::{Display, Formatter, write};
 
 #[derive(Debug)]
 pub enum EvaluationError {
@@ -8,7 +8,7 @@ pub enum EvaluationError {
     MissingOperator,
     ArityMismatch(usize, usize),
     UnknownIdentifier(String),
-    InvalidInterval(f64, f64)
+    InvalidInterval(f64, f64),
 }
 
 impl Display for EvaluationError {
@@ -26,7 +26,9 @@ impl Display for EvaluationError {
                 expected, provided
             ),
             EvaluationError::UnknownIdentifier(msg) => write!(f, "unknown identifier: '{}'", msg),
-            EvaluationError::InvalidInterval(a, b) => write!(f, "invalid interval: '{}' is greater than '{}'", a, b),
+            EvaluationError::InvalidInterval(a, b) => {
+                write!(f, "invalid interval: '{}' is greater than '{}'", a, b)
+            }
         }
     }
 }

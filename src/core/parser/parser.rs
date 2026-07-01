@@ -43,9 +43,8 @@ impl Parser<'_> {
                 return self.parse_intersect(&sliced, &display_tokens);
             }
         }
-        
-        if let Some(RawToken::Identifier(clear_command)
-        ) = sliced.get(0) {
+
+        if let Some(RawToken::Identifier(clear_command)) = sliced.get(0) {
             if clear_command == "clear" {
                 if let Some(target) = sliced.get(1) {
                     match target {
@@ -54,12 +53,17 @@ impl Parser<'_> {
                             return match clear_target.as_str() {
                                 "plots" => Ok(Statement::ClearPlots),
                                 "output" => Ok(Statement::ClearOutput),
-                                _ => Err(Located::new(ParseError::InvalidSyntax("invalid clear target".to_string()), 
-                                                      ErrorContext::new(sliced.iter().map(|x| x.to_string()).collect(), 1)))
-                            }
+                                _ => Err(Located::new(
+                                    ParseError::InvalidSyntax("invalid clear target".to_string()),
+                                    ErrorContext::new(
+                                        sliced.iter().map(|x| x.to_string()).collect(),
+                                        1,
+                                    ),
+                                )),
+                            };
                         }
-                        _ => unreachable!()
-                    }   
+                        _ => unreachable!(),
+                    }
                 }
             }
         }

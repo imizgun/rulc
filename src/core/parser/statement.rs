@@ -24,5 +24,5 @@ pub enum Statement {
     },
     ClearPlots,
     ClearOutput,
-    ClearAll
+    ClearAll,
 }

@@ -1,10 +1,10 @@
-use crate::core::parser::token::Token;
 use crate::core::core_initializer::CoreInitializer;
 use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluator::Evaluator;
 use crate::core::evaluator::evaluator_result::Value::Numeric;
 use crate::core::parser::identifier_value::{BuiltinValue, FunctionIdentifier, IdentifierValue};
 use crate::core::parser::statement::Statement;
+use crate::core::parser::token::Token;
 use crate::core::registries::identifiers_registry::IdentifiersRegistry;
 use crate::core::repl_output::ReplOutput;
 use crate::core::runtime_error::RuntimeError;
@@ -38,17 +38,19 @@ impl EvaluateService {
         Ok(())
     }
 
-    fn eval_scalar(
-        &self,
-        tokens: &[Token],
-    ) -> Result<f64, RuntimeError> {
+    fn eval_scalar(&self, tokens: &[Token]) -> Result<f64, RuntimeError> {
         let Numeric(n) = Evaluator::new(tokens, self.core.identifiers_registry()).run()? else {
             unreachable!()
         };
         Ok(n)
     }
 
-    fn get_func_value_in(&self, func_ident: &IdentifierValue, from: f64, to: f64) -> Result<Vec<(f64, f64)>, RuntimeError> {
+    fn get_func_value_in(
+        &self,
+        func_ident: &IdentifierValue,
+        from: f64,
+        to: f64,
+    ) -> Result<Vec<(f64, f64)>, RuntimeError> {
         let mut points = Vec::<(f64, f64)>::new();
         // step count computed once and x derived from it directly (from + i * STEP)
         // instead of repeatedly adding STEP, so rounding error doesn't accumulate
@@ -71,9 +73,7 @@ impl EvaluateService {
                         Err(_) => continue,
                     }
                 }
-                IdentifierValue::Builtin(BuiltinValue::Function { arity: 1, func }) => {
-                    func(&[x])
-                }
+                IdentifierValue::Builtin(BuiltinValue::Function { arity: 1, func }) => func(&[x]),
                 IdentifierValue::Builtin(BuiltinValue::Function { arity, .. }) => {
                     return Err(RuntimeError::from(EvaluationError::ArityMismatch(
                         *arity, 1,
@@ -128,9 +128,12 @@ impl EvaluateService {
         &self,
         function_name: String,
         from: f64,
-        to: f64) -> Result<ReplOutput, RuntimeError> {
+        to: f64,
+    ) -> Result<ReplOutput, RuntimeError> {
         if from > to {
-            return Err(RuntimeError::from(EvaluationError::InvalidInterval(from, to)))
+            return Err(RuntimeError::from(EvaluationError::InvalidInterval(
+                from, to,
+            )));
         }
 
         let ident = self
@@ -138,9 +141,7 @@ impl EvaluateService {
             .identifiers_registry()
             .get_identifier(&function_name)
             .ok_or_else(|| {
-                RuntimeError::from(EvaluationError::UnknownIdentifier(
-                    function_name.clone(),
-                ))
+                RuntimeError::from(EvaluationError::UnknownIdentifier(function_name.clone()))
             })?;
 
         let points = self.get_func_value_in(&ident, from, to)?;
@@ -152,9 +153,12 @@ impl EvaluateService {
         left_function_name: String,
         right_function_name: String,
         from: f64,
-        to: f64) -> Result<ReplOutput, RuntimeError> {
+        to: f64,
+    ) -> Result<ReplOutput, RuntimeError> {
         if from > to {
-            return Err(RuntimeError::from(EvaluationError::InvalidInterval(from, to)))
+            return Err(RuntimeError::from(EvaluationError::InvalidInterval(
+                from, to,
+            )));
         }
 
         let left_ident = self
@@ -249,24 +253,21 @@ impl EvaluateService {
                 let to = self.eval_scalar(&to_tokens)?;
 
                 self.handle_drawing(function_name, from, to)
-            },
+            }
             Statement::IntersectionCommand {
                 left_function_name,
                 right_function_name,
                 from_tokens,
-                to_tokens} => {
+                to_tokens,
+            } => {
                 let from = self.eval_scalar(&from_tokens)?;
                 let to = self.eval_scalar(&to_tokens)?;
 
-                self.handle_intersection(
-                    left_function_name,
-                    right_function_name,
-                    from,
-                    to)
-            },
+                self.handle_intersection(left_function_name, right_function_name, from, to)
+            }
             Statement::ClearPlots => Ok(ReplOutput::ClearPlots),
             Statement::ClearAll => Ok(ReplOutput::ClearAll),
-            Statement::ClearOutput => Ok(ReplOutput::ClearHistory)
+            Statement::ClearOutput => Ok(ReplOutput::ClearHistory),
         }
     }
 }

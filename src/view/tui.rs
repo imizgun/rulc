@@ -18,13 +18,13 @@ const COLORS: &[Color] = &[
     Color::Green,
     Color::Red,
     Color::Magenta,
-    Color::Cyan
+    Color::Cyan,
 ];
 const MAX_PLOTS: usize = COLORS.len();
 
 struct Plot {
     pub points: Vec<(f64, f64)>,
-    pub color: Color
+    pub color: Color,
 }
 
 struct App {
@@ -144,8 +144,10 @@ impl App {
 
         if plots.len() >= MAX_PLOTS {
             self.history.push(
-                Line::from(format!("{INPUT_PREFIX}plot limit reached ({MAX_PLOTS}). Use `clear plots` command"))
-                    .style(Style::new().fg(Color::Red)),
+                Line::from(format!(
+                    "{INPUT_PREFIX}plot limit reached ({MAX_PLOTS}). Use `clear plots` command"
+                ))
+                .style(Style::new().fg(Color::Red)),
             );
             return;
         }
@@ -153,8 +155,7 @@ impl App {
         let color = COLORS[plots.len()];
         plots.push(Plot { points, color });
         self.history.push(
-            Line::from(format!("{INPUT_PREFIX}plot updated"))
-                .style(Style::new().fg(Color::Cyan)),
+            Line::from(format!("{INPUT_PREFIX}plot updated")).style(Style::new().fg(Color::Cyan)),
         );
     }
 
@@ -176,8 +177,11 @@ impl App {
         }
 
         self.history.push(
-            Line::from(format!("{INPUT_PREFIX}{} intersection point(s):", points.len()))
-                .style(Style::new().fg(Color::Cyan)),
+            Line::from(format!(
+                "{INPUT_PREFIX}{} intersection point(s):",
+                points.len()
+            ))
+            .style(Style::new().fg(Color::Cyan)),
         );
         for (x, y) in &points {
             self.history

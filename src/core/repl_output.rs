@@ -8,7 +8,7 @@ pub enum ReplOutput {
     IntersectionPoints { points: Vec<(f64, f64)> },
     ClearPlots,
     ClearHistory,
-    ClearAll
+    ClearAll,
 }
 
 impl Display for ReplOutput {
