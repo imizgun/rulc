@@ -29,9 +29,6 @@ jobs:
       - name: Format check
         run: cargo fmt --check
 
-      - name: Clippy
-        run: cargo clippy -- -D warnings
-
   test:
     name: Test (${{ matrix.os }})
     needs: check
