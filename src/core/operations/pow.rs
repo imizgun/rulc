@@ -1,4 +1,3 @@
-use num_traits::pow;
 use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluation_rule::EvaluationRule;
 use crate::core::operations::operation::Operation;
