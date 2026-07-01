@@ -2,7 +2,9 @@ use crate::core::evaluate_service::EvaluateService;
 use crate::core::repl_output::ReplOutput;
 use crate::core::runtime_error::RuntimeError;
 use crate::view::viewable::Viewable;
-use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, MouseEventKind};
+use crossterm::event::{
+    self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, MouseEventKind,
+};
 use ratatui::layout::{Constraint, Layout};
 use ratatui::style::{Color, Style};
 use ratatui::text::{Line, Span};
@@ -33,7 +35,9 @@ impl App {
     }
 
     fn insert_char(&mut self, c: char) {
-        let byte_idx = self.input.char_indices()
+        let byte_idx = self
+            .input
+            .char_indices()
             .nth(self.cursor_pos)
             .map(|(i, _)| i)
             .unwrap_or(self.input.len());
@@ -42,8 +46,12 @@ impl App {
     }
 
     fn delete_char_before(&mut self) {
-        if self.cursor_pos == 0 { return; }
-        let byte_idx = self.input.char_indices()
+        if self.cursor_pos == 0 {
+            return;
+        }
+        let byte_idx = self
+            .input
+            .char_indices()
             .nth(self.cursor_pos - 1)
             .map(|(i, _)| i)
             .unwrap_or(self.input.len());
@@ -57,7 +65,9 @@ impl App {
     }
 
     fn history_up(&mut self) {
-        if self.cmd_history.is_empty() { return; }
+        if self.cmd_history.is_empty() {
+            return;
+        }
         match self.cmd_cursor {
             None => {
                 self.saved_input = self.input.clone();
@@ -95,7 +105,8 @@ impl App {
         }
 
         self.cmd_history.push(input.clone());
-        self.history.push(Line::from(format!("{INPUT_PREFIX}{input}")));
+        self.history
+            .push(Line::from(format!("{INPUT_PREFIX}{input}")));
 
         match self.service.evaluate(&input) {
             Ok(ReplOutput::FuncPoints { points }) => {
@@ -126,10 +137,9 @@ const OUTPUT_INDENT: &str = "   ";
 
 fn format_result(res: Result<ReplOutput, RuntimeError>) -> Vec<Line<'static>> {
     match res {
-        Ok(out) => vec![
-            Line::from(format!("{INPUT_PREFIX}{out}"))
-                .style(Style::new().fg(Color::Green)),
-        ],
+        Ok(out) => {
+            vec![Line::from(format!("{INPUT_PREFIX}{out}")).style(Style::new().fg(Color::Green))]
+        }
         Err(err) => {
             let lines = err.display_lines();
             vec![
@@ -191,16 +201,14 @@ impl Viewable for TuiView {
 
 fn draw(frame: &mut ratatui::Frame, app: &mut App) {
     let [plot_area, bottom_area] =
-        Layout::vertical([Constraint::Ratio(2, 3), Constraint::Ratio(1, 3)])
-            .areas(frame.area());
+        Layout::vertical([Constraint::Ratio(2, 3), Constraint::Ratio(1, 3)]).areas(frame.area());
 
     let [repl_area, memory_area] =
         Layout::horizontal([Constraint::Percentage(60), Constraint::Percentage(40)])
             .areas(bottom_area);
 
     let [history_area, input_area] =
-        Layout::vertical([Constraint::Percentage(80), Constraint::Percentage(20)])
-            .areas(repl_area);
+        Layout::vertical([Constraint::Percentage(80), Constraint::Percentage(20)]).areas(repl_area);
 
     app.history_viewport_height = history_area.height.saturating_sub(2);
     app.history_scroll = app.history_scroll.min(app.max_scroll());
@@ -217,9 +225,15 @@ fn draw(frame: &mut ratatui::Frame, app: &mut App) {
     let chart = match &app.plot {
         Some(points) if !points.is_empty() => {
             let x_min = points.iter().map(|(x, _)| *x).fold(f64::INFINITY, f64::min);
-            let x_max = points.iter().map(|(x, _)| *x).fold(f64::NEG_INFINITY, f64::max);
+            let x_max = points
+                .iter()
+                .map(|(x, _)| *x)
+                .fold(f64::NEG_INFINITY, f64::max);
             let y_min = points.iter().map(|(_, y)| *y).fold(f64::INFINITY, f64::min);
-            let y_max = points.iter().map(|(_, y)| *y).fold(f64::NEG_INFINITY, f64::max);
+            let y_max = points
+                .iter()
+                .map(|(_, y)| *y)
+                .fold(f64::NEG_INFINITY, f64::max);
             let y_pad = ((y_max - y_min) * 0.1).max(1.0);
             let y_bounds = [y_min - y_pad, y_max + y_pad];
 
@@ -233,39 +247,39 @@ fn draw(frame: &mut ratatui::Frame, app: &mut App) {
 
             let mut datasets = vec![curve];
             if y_bounds[0] <= 0.0 && 0.0 <= y_bounds[1] {
-                datasets.push(Dataset::default()
-                    .data(&h_zero)
-                    .graph_type(GraphType::Line)
-                    .style(Style::new().fg(Color::DarkGray)));
+                datasets.push(
+                    Dataset::default()
+                        .data(&h_zero)
+                        .graph_type(GraphType::Line)
+                        .style(Style::new().fg(Color::DarkGray)),
+                );
             }
             if x_min <= 0.0 && 0.0 <= x_max {
-                datasets.push(Dataset::default()
-                    .data(&v_zero)
-                    .graph_type(GraphType::Line)
-                    .style(Style::new().fg(Color::DarkGray)));
+                datasets.push(
+                    Dataset::default()
+                        .data(&v_zero)
+                        .graph_type(GraphType::Line)
+                        .style(Style::new().fg(Color::DarkGray)),
+                );
             }
 
             Chart::new(datasets)
                 .block(block)
-                .x_axis(Axis::default()
-                    .bounds([x_min, x_max])
-                    .labels(vec![
-                        Span::from(format!("{x_min:.1}")),
-                        Span::from(format!("{x_max:.1}")),
-                    ]))
-                .y_axis(Axis::default()
-                    .bounds(y_bounds)
-                    .labels(vec![
-                        Span::from(format!("{:.1}", y_bounds[0])),
-                        Span::from(format!("{:.1}", y_bounds[1])),
-                    ]))
+                .x_axis(Axis::default().bounds([x_min, x_max]).labels(vec![
+                    Span::from(format!("{x_min:.1}")),
+                    Span::from(format!("{x_max:.1}")),
+                ]))
+                .y_axis(Axis::default().bounds(y_bounds).labels(vec![
+                    Span::from(format!("{:.1}", y_bounds[0])),
+                    Span::from(format!("{:.1}", y_bounds[1])),
+                ]))
         }
         _ => Chart::new(vec![]).block(block),
     };
     frame.render_widget(chart, plot_area);
 
-    let input = Paragraph::new(app.input.as_str())
-        .block(Block::new().borders(Borders::ALL).title("input"));
+    let input =
+        Paragraph::new(app.input.as_str()).block(Block::new().borders(Borders::ALL).title("input"));
 
     frame.render_widget(input, input_area);
 
@@ -281,9 +295,8 @@ fn draw(frame: &mut ratatui::Frame, app: &mut App) {
         .map(|(name, value)| Line::from(format!("{name} = {value}")))
         .collect();
 
-    let memory = Paragraph::new(memory_lines)
-        .block(Block::new().borders(Borders::ALL).title("memory"));
+    let memory =
+        Paragraph::new(memory_lines).block(Block::new().borders(Borders::ALL).title("memory"));
 
     frame.render_widget(memory, memory_area);
 }
-

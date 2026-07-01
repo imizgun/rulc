@@ -18,7 +18,9 @@ impl Operation for DivisionOperation {
         let right = operands[1];
 
         if right == 0.0 {
-            return Err(EvaluationError::ArithmeticError("division by zero".to_string()));
+            return Err(EvaluationError::ArithmeticError(
+                "division by zero".to_string(),
+            ));
         }
 
         Ok(left / right)

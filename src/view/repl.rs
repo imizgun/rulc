@@ -1,9 +1,9 @@
-use colored::Colorize;
-use rustyline::DefaultEditor;
 use crate::core::evaluate_service::EvaluateService;
 use crate::core::repl_output::ReplOutput;
 use crate::core::runtime_error::RuntimeError;
 use crate::view::viewable::Viewable;
+use colored::Colorize;
+use rustyline::DefaultEditor;
 
 pub struct ReplView;
 
@@ -33,9 +33,11 @@ impl ReplView {
                 println!(
                     "{} {}",
                     ReplView::get_invite().red().bold(),
-                    format!("{}\n   {}", lines.formatted_tokens, lines.error).red().bold()
+                    format!("{}\n   {}", lines.formatted_tokens, lines.error)
+                        .red()
+                        .bold()
                 )
-            },
+            }
         }
     }
 }
@@ -51,7 +53,9 @@ impl Viewable for ReplView {
             match rl.readline("> ") {
                 Ok(line) => {
                     let trimmed = line.trim();
-                    if trimmed.is_empty() { continue; }
+                    if trimmed.is_empty() {
+                        continue;
+                    }
                     rl.add_history_entry(trimmed).ok();
                     ReplView::print_result(eval_service.evaluate(trimmed));
                     println!();

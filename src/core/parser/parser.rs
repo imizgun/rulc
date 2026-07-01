@@ -14,17 +14,18 @@ pub struct Parser<'a> {
 }
 
 impl Parser<'_> {
-    pub fn new<'a>(
-        operation_registry: &'a OperationRegistry,
-        lexer: &'a Lexer,
-    ) -> Parser<'a> {
-        Parser { operation_registry, lexer }
+    pub fn new<'a>(operation_registry: &'a OperationRegistry, lexer: &'a Lexer) -> Parser<'a> {
+        Parser {
+            operation_registry,
+            lexer,
+        }
     }
 
     pub fn parse(&self, input: &str) -> Result<Statement, Located<ParseError>> {
         let sliced = self.lexer.slice_input_string(input.trim());
 
-        let display_tokens: Vec<String> = sliced.iter()
+        let display_tokens: Vec<String> = sliced
+            .iter()
             .filter(|t| !matches!(t, RawToken::Eof))
             .map(|t| t.to_string())
             .collect();
@@ -62,7 +63,10 @@ impl Parser<'_> {
                     expanded.insert(0, RawToken::Operator(base_sign.to_string()));
                     expanded.insert(0, RawToken::Identifier(name.clone()));
                     let tokens = self.parse_raw_tokens(&expanded, &display_tokens, 2)?;
-                    return Ok(Statement::Assignment { name: name.clone(), tokens });
+                    return Ok(Statement::Assignment {
+                        name: name.clone(),
+                        tokens,
+                    });
                 }
             }
         }
@@ -76,9 +80,11 @@ impl Parser<'_> {
         sliced: &[RawToken],
         display_tokens: &[String],
     ) -> Result<Statement, Located<ParseError>> {
-        let syntax_err = || Located::unlocated(ParseError::InvalidSyntax(
-            "expected: draw <func> from <expr> to <expr>".to_string()
-        ));
+        let syntax_err = || {
+            Located::unlocated(ParseError::InvalidSyntax(
+                "expected: draw <func> from <expr> to <expr>".to_string(),
+            ))
+        };
 
         let function_name = match sliced.get(1) {
             Some(RawToken::Identifier(name)) => name.clone(),
@@ -90,7 +96,8 @@ impl Parser<'_> {
             _ => return Err(syntax_err()),
         }
 
-        let to_pos = sliced[3..].iter()
+        let to_pos = sliced[3..]
+            .iter()
             .position(|t| matches!(t, RawToken::Identifier(kw) if kw == "to"))
             .map(|p| p + 3)
             .ok_or_else(syntax_err)?;
@@ -99,7 +106,11 @@ impl Parser<'_> {
         from_tokens.push(Token::Eof);
         let to_tokens = self.parse_raw_tokens(&sliced[to_pos + 1..], display_tokens, to_pos + 1)?;
 
-        Ok(Statement::DrawCommand { function_name, from_tokens, to_tokens })
+        Ok(Statement::DrawCommand {
+            function_name,
+            from_tokens,
+            to_tokens,
+        })
     }
 
     fn try_parse_function_def(
@@ -110,7 +121,8 @@ impl Parser<'_> {
     ) -> Result<Option<Statement>, Located<ParseError>> {
         // sliced[0] = Identifier(name), sliced[1] = Operator("(")
         // Find first ")" — params are flat identifiers, no nesting
-        let Some(close_pos) = sliced[2..].iter()
+        let Some(close_pos) = sliced[2..]
+            .iter()
             .position(|t| matches!(t, RawToken::Operator(op) if op == ")"))
             .map(|p| p + 2)
         else {
@@ -135,8 +147,13 @@ impl Parser<'_> {
             }
         }
 
-        let body = self.parse_raw_tokens(&sliced[close_pos + 2..], display_tokens, close_pos + 2)?;
-        Ok(Some(Statement::FunctionDefinition { name: name.to_string(), params, body }))
+        let body =
+            self.parse_raw_tokens(&sliced[close_pos + 2..], display_tokens, close_pos + 2)?;
+        Ok(Some(Statement::FunctionDefinition {
+            name: name.to_string(),
+            params,
+            body,
+        }))
     }
 
     fn parse_raw_tokens(
@@ -160,7 +177,10 @@ impl Parser<'_> {
                         display_tokens,
                         offset + args_start,
                     )?;
-                    tokens.push(Token::FunctionCall { name: name.clone(), args });
+                    tokens.push(Token::FunctionCall {
+                        name: name.clone(),
+                        args,
+                    });
                     i += 2 + consumed;
                     continue;
                 }
@@ -199,7 +219,8 @@ impl Parser<'_> {
                 RawToken::Operator(op) if op == ")" => {
                     if depth == 0 {
                         if !current.is_empty() {
-                            let mut arg_tokens = self.parse_raw_tokens(&current, display_tokens, offset)?;
+                            let mut arg_tokens =
+                                self.parse_raw_tokens(&current, display_tokens, offset)?;
                             arg_tokens.push(Token::Eof);
                             args.push(arg_tokens);
                         }
@@ -231,7 +252,9 @@ impl Parser<'_> {
                 .ok_or_else(|| ParseError::InvalidNumber(body.clone())),
             RawToken::Operator(body) if body == "(" => Ok(Token::OpenParen),
             RawToken::Operator(body) if body == ")" => Ok(Token::CloseParen),
-            RawToken::Operator(body) => self.operation_registry.get(body)
+            RawToken::Operator(body) => self
+                .operation_registry
+                .get(body)
                 .map(Token::Operation)
                 .ok_or_else(|| ParseError::UnknownOperator(body.clone())),
             RawToken::Identifier(body) => Ok(Token::Variable(body.clone())),

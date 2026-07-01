@@ -1,5 +1,5 @@
 pub enum Mode {
     Repl,
     Tui,
-    Inline(String)
+    Inline(String),
 }

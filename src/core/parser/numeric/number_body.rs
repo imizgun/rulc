@@ -4,7 +4,7 @@ use crate::core::parser::parsable::Parsable;
 pub struct NumberBody {
     pub raw: String,
     pub base: u8,
-    pub decimal_value: f64
+    pub decimal_value: f64,
 }
 
 impl From<f64> for NumberBody {
@@ -12,7 +12,7 @@ impl From<f64> for NumberBody {
         NumberBody {
             decimal_value: f,
             raw: f.to_string(),
-            base: 10
+            base: 10,
         }
     }
 }
@@ -23,8 +23,9 @@ impl Parsable<NumberBody> for NumberBody {
             Ok(num) => Some(NumberBody {
                 raw: str.to_string(),
                 base: 10,
-                decimal_value: num}),
-            Err(_) => None
+                decimal_value: num,
+            }),
+            Err(_) => None,
         }
     }
 }

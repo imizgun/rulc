@@ -8,9 +8,13 @@ use crate::core::parser::token::Token;
 
 pub struct MinusOperation;
 impl Operation for MinusOperation {
-    fn get_operand_count(&self) -> usize { 2 }
+    fn get_operand_count(&self) -> usize {
+        2
+    }
 
-    fn get_sign(&self) -> &str { "-" }
+    fn get_sign(&self) -> &str {
+        "-"
+    }
 
     fn calc(&self, operands: &[f64]) -> Result<f64, EvaluationError> {
         Ok(operands[0] - operands[1])
@@ -24,7 +28,7 @@ impl EvaluationRule for MinusOperation {
             other => Err(EvaluationError::InvalidTokenPlace(other.to_string())),
         }
     }
-    
+
     fn lbp(&self) -> u32 {
         10
     }

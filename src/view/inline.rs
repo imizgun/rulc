@@ -3,7 +3,7 @@ use crate::view::repl::ReplView;
 use crate::view::viewable::Viewable;
 
 pub struct InlineView {
-    pub(crate) expression: String
+    pub(crate) expression: String,
 }
 
 impl Viewable for InlineView {

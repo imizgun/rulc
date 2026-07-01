@@ -1,10 +1,10 @@
-pub mod operations;
-pub mod registries;
-pub mod parser;
+pub mod core_initializer;
+pub mod error_display;
+pub mod evaluate_service;
 pub mod evaluator;
 pub mod lexer;
-pub mod core_initializer;
-pub mod evaluate_service;
-pub mod error_display;
+pub mod operations;
+pub mod parser;
+pub mod registries;
 pub mod repl_output;
 pub mod runtime_error;

@@ -1,15 +1,18 @@
-use std::fmt::{Display, Formatter};
 use crate::core::error_display::Located;
 use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluator::Evaluator;
 use crate::core::evaluator::evaluator_result::Value;
 use crate::core::parser::token::Token;
 use crate::core::registries::identifiers_registry::IdentifiersRegistry;
+use std::fmt::{Display, Formatter};
 
 #[derive(Clone)]
 pub enum BuiltinValue {
     Constant(f64),
-    Function { arity: usize, func: fn(&[f64]) -> f64 },
+    Function {
+        arity: usize,
+        func: fn(&[f64]) -> f64,
+    },
 }
 
 #[derive(Clone)]
@@ -23,12 +26,17 @@ impl Display for IdentifierValue {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         match self {
             IdentifierValue::Number(n) => write!(f, "{n}"),
-            IdentifierValue::Function(func) => write!(f, "fn({}) {}",
-                                                      func.parameters.join(", "),
-                                                      func.function_body.iter()
-                                                          .filter(|t| !matches!(t, Token::Eof))
-                                                          .map(|t| t.to_string())
-                                                          .collect::<Vec<_>>().join(" ")),
+            IdentifierValue::Function(func) => write!(
+                f,
+                "fn({}) {}",
+                func.parameters.join(", "),
+                func.function_body
+                    .iter()
+                    .filter(|t| !matches!(t, Token::Eof))
+                    .map(|t| t.to_string())
+                    .collect::<Vec<_>>()
+                    .join(" ")
+            ),
             IdentifierValue::Builtin(BuiltinValue::Constant(n)) => write!(f, "{n}"),
             IdentifierValue::Builtin(BuiltinValue::Function { arity, .. }) => {
                 write!(f, "<builtin/{arity}>")
@@ -45,14 +53,22 @@ pub struct FunctionIdentifier {
 
 impl FunctionIdentifier {
     pub fn new(parameters: Vec<String>, function_body: Vec<Token>) -> FunctionIdentifier {
-        FunctionIdentifier { function_body, parameters }
+        FunctionIdentifier {
+            function_body,
+            parameters,
+        }
     }
 
-    pub fn value(&self, args: &[f64], global: &IdentifiersRegistry) -> Result<f64, Located<EvaluationError>> {
+    pub fn value(
+        &self,
+        args: &[f64],
+        global: &IdentifiersRegistry,
+    ) -> Result<f64, Located<EvaluationError>> {
         if self.parameters.len() != args.len() {
-            return Err(Located::unlocated(
-                EvaluationError::ArityMismatch(self.parameters.len(), args.len())
-            ));
+            return Err(Located::unlocated(EvaluationError::ArityMismatch(
+                self.parameters.len(),
+                args.len(),
+            )));
         }
 
         let mut local = global.clone();

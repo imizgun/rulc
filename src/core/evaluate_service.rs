@@ -26,15 +26,21 @@ impl EvaluateService {
     }
 
     fn guard_builtin(&self, name: &str) -> Result<(), RuntimeError> {
-        if matches!(self.core.identifiers_registry().get_identifier(name), Some(IdentifierValue::Builtin(_))) {
+        if matches!(
+            self.core.identifiers_registry().get_identifier(name),
+            Some(IdentifierValue::Builtin(_))
+        ) {
             return Err(RuntimeError::from(EvaluationError::InvalidTokenPlace(
-                format!("'{}' is a builtin and cannot be redefined", name)
+                format!("'{}' is a builtin and cannot be redefined", name),
             )));
         }
         Ok(())
     }
 
-    fn eval_scalar(&self, tokens: &[crate::core::parser::token::Token]) -> Result<f64, RuntimeError> {
+    fn eval_scalar(
+        &self,
+        tokens: &[crate::core::parser::token::Token],
+    ) -> Result<f64, RuntimeError> {
         let Numeric(n) = Evaluator::new(tokens, self.core.identifiers_registry()).run()? else {
             unreachable!()
         };
@@ -58,39 +64,63 @@ impl EvaluateService {
                 let Numeric(num) = evaluator.run()? else {
                     unreachable!("boolean expressions are not yet implemented")
                 };
-                self.core.identifiers_registry_mut()
+                self.core
+                    .identifiers_registry_mut()
                     .register_identifier(&name, &IdentifierValue::Number(num));
                 Ok(ReplOutput::Message(format!("{} = {}", name, num)))
             }
             Statement::FunctionDefinition { name, params, body } => {
                 self.guard_builtin(&name)?;
                 let func = FunctionIdentifier::new(params, body);
-                self.core.identifiers_registry_mut()
+                self.core
+                    .identifiers_registry_mut()
                     .register_identifier(&name, &IdentifierValue::Function(func));
                 Ok(ReplOutput::Message(format!("function '{}' defined", name)))
-            },
-            Statement::DrawCommand { function_name, from_tokens, to_tokens } => {
+            }
+            Statement::DrawCommand {
+                function_name,
+                from_tokens,
+                to_tokens,
+            } => {
                 let from = self.eval_scalar(&from_tokens)?;
                 let to = self.eval_scalar(&to_tokens)?;
 
-                let ident = self.core.identifiers_registry().get_identifier(&function_name)
-                    .ok_or_else(|| RuntimeError::from(EvaluationError::UnknownIdentifier(function_name.clone())))?;
+                let ident = self
+                    .core
+                    .identifiers_registry()
+                    .get_identifier(&function_name)
+                    .ok_or_else(|| {
+                        RuntimeError::from(EvaluationError::UnknownIdentifier(
+                            function_name.clone(),
+                        ))
+                    })?;
 
                 let mut points = Vec::<(f64, f64)>::new();
                 let mut x = from;
                 while x <= to {
                     let y = match &ident {
                         IdentifierValue::Function(func) => {
-                            let call_args: &[f64] = if func.parameters.is_empty() {&[]} else {&[x]};
-                            func.value(call_args, self.core.identifiers_registry()).map_err(RuntimeError::from)?
+                            let call_args: &[f64] = if func.parameters.is_empty() {
+                                &[]
+                            } else {
+                                &[x]
+                            };
+                            func.value(call_args, self.core.identifiers_registry())
+                                .map_err(RuntimeError::from)?
                         }
-                        IdentifierValue::Builtin(BuiltinValue::Function { arity: 1, func }) => func(&[x]),
+                        IdentifierValue::Builtin(BuiltinValue::Function { arity: 1, func }) => {
+                            func(&[x])
+                        }
                         IdentifierValue::Builtin(BuiltinValue::Function { arity, .. }) => {
-                            return Err(RuntimeError::from(EvaluationError::ArityMismatch(*arity, 1)));
+                            return Err(RuntimeError::from(EvaluationError::ArityMismatch(
+                                *arity, 1,
+                            )));
                         }
-                        _ => return Err(RuntimeError::from(EvaluationError::InvalidTokenPlace(
-                            format!("'{}' is not a function", function_name)
-                        ))),
+                        _ => {
+                            return Err(RuntimeError::from(EvaluationError::InvalidTokenPlace(
+                                format!("'{}' is not a function", function_name),
+                            )));
+                        }
                     };
                     points.push((x, y));
                     x += STEP;

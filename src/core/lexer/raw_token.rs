@@ -5,7 +5,7 @@ pub enum RawToken {
     Number(String),
     Identifier(String),
     Operator(String),
-    Eof
+    Eof,
 }
 
 impl Display for RawToken {

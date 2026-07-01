@@ -21,13 +21,21 @@ pub trait Operation: EvaluationRule {
         self.calc(operands)
     }
 
-    fn default_led(&self, evaluator: &mut Evaluator, left: &Token) -> Result<Token, EvaluationError> {
+    fn default_led(
+        &self,
+        evaluator: &mut Evaluator,
+        left: &Token,
+    ) -> Result<Token, EvaluationError> {
         let right = match evaluator.evaluate(self.lbp()).map_err(|e| e.error)? {
             Value::Numeric(n) => n,
             other => return Err(EvaluationError::InvalidTokenPlace(other.to_string())),
         };
         let left_res = left.as_f64().ok_or(EvaluationError::MissingOperand)?;
         let res = self.get_result(&[left_res, right])?;
-        Ok(Number(NumberBody { base: 10, raw: res.to_string(), decimal_value: res }))
+        Ok(Number(NumberBody {
+            base: 10,
+            raw: res.to_string(),
+            decimal_value: res,
+        }))
     }
 }

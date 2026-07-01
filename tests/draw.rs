@@ -1,7 +1,9 @@
 use rulc::core::evaluate_service::EvaluateService;
 use rulc::core::repl_output::ReplOutput;
 
-fn svc() -> EvaluateService { EvaluateService::new() }
+fn svc() -> EvaluateService {
+    EvaluateService::new()
+}
 
 fn points(s: &mut EvaluateService, expr: &str) -> Vec<(f64, f64)> {
     let ReplOutput::FuncPoints { points } = s.evaluate(expr).unwrap() else {

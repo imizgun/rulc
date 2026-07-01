@@ -57,11 +57,15 @@ impl EvaluationRule for Token {
             }
             Token::Variable(name) => match evaluator.identifier_registry.get_identifier(name) {
                 Some(IdentifierValue::Number(num)) => Ok(Token::Number(NumberBody::from(num))),
-                Some(IdentifierValue::Builtin(BuiltinValue::Constant(n))) => Ok(Token::Number(NumberBody::from(n))),
-                Some(IdentifierValue::Function(_)) | Some(IdentifierValue::Builtin(BuiltinValue::Function { .. })) => {
-                    Err(EvaluationError::InvalidTokenPlace(
-                        format!("'{}' is a function, use {}(...) to call it", name, name)
-                    ))
+                Some(IdentifierValue::Builtin(BuiltinValue::Constant(n))) => {
+                    Ok(Token::Number(NumberBody::from(n)))
+                }
+                Some(IdentifierValue::Function(_))
+                | Some(IdentifierValue::Builtin(BuiltinValue::Function { .. })) => {
+                    Err(EvaluationError::InvalidTokenPlace(format!(
+                        "'{}' is a function, use {}(...) to call it",
+                        name, name
+                    )))
                 }
                 None => Err(EvaluationError::UnknownIdentifier(name.clone())),
             },
@@ -80,15 +84,19 @@ impl EvaluationRule for Token {
                         let arg_values = eval_args(args, evaluator)?;
                         Ok(Token::Number(NumberBody::from(func(&arg_values))))
                     }
-                    Some(IdentifierValue::Number(_)) | Some(IdentifierValue::Builtin(BuiltinValue::Constant(_))) => {
-                        Err(EvaluationError::InvalidTokenPlace(
-                            format!("'{}' is a number, not a function", name)
-                        ))
+                    Some(IdentifierValue::Number(_))
+                    | Some(IdentifierValue::Builtin(BuiltinValue::Constant(_))) => {
+                        Err(EvaluationError::InvalidTokenPlace(format!(
+                            "'{}' is a number, not a function",
+                            name
+                        )))
                     }
                     None => Err(EvaluationError::UnknownIdentifier(name.clone())),
                 }
             }
-            Token::CloseParen | Token::Eof => Err(EvaluationError::InvalidTokenPlace(self.to_string())),
+            Token::CloseParen | Token::Eof => {
+                Err(EvaluationError::InvalidTokenPlace(self.to_string()))
+            }
         }
     }
 
@@ -113,12 +121,15 @@ impl Display for Token {
             Token::Number(b) => write!(f, "{}", b.raw),
             Token::Variable(v) => write!(f, "{}", v),
             Token::FunctionCall { name, args } => {
-                let args_str: Vec<String> = args.iter()
-                    .map(|arg| arg.iter()
-                        .filter(|t| !matches!(t, Token::Eof))
-                        .map(|t| t.to_string())
-                        .collect::<Vec<_>>()
-                        .join(" "))
+                let args_str: Vec<String> = args
+                    .iter()
+                    .map(|arg| {
+                        arg.iter()
+                            .filter(|t| !matches!(t, Token::Eof))
+                            .map(|t| t.to_string())
+                            .collect::<Vec<_>>()
+                            .join(" ")
+                    })
                     .collect();
                 write!(f, "{}({})", name, args_str.join(", "))
             }

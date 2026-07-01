@@ -1,10 +1,14 @@
 use rulc::core::evaluate_service::EvaluateService;
 use rulc::core::repl_output::ReplOutput;
 
-fn svc() -> EvaluateService { EvaluateService::new() }
+fn svc() -> EvaluateService {
+    EvaluateService::new()
+}
 
 fn eval_num(s: &mut EvaluateService, expr: &str) -> f64 {
-    let ReplOutput::Value(v) = s.evaluate(expr).unwrap() else { panic!("expected Value for {expr}") };
+    let ReplOutput::Value(v) = s.evaluate(expr).unwrap() else {
+        panic!("expected Value for {expr}")
+    };
     v.to_string().parse().unwrap()
 }
 

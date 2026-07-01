@@ -1,7 +1,7 @@
-use std::fmt::{Display, Formatter};
 use crate::core::error_display::{Located, LocatedErrorDisplay};
 use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::parser::parse_error::ParseError;
+use std::fmt::{Display, Formatter};
 
 #[derive(Debug)]
 pub enum RuntimeError {

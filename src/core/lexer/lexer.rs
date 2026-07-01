@@ -24,7 +24,7 @@ impl Lexer {
                 '0'..='9' | '.' => LexerState::Number,
                 c if c.is_alphabetic() => LexerState::Identifier,
                 ' ' => LexerState::Idle,
-                _ => LexerState::Operator
+                _ => LexerState::Operator,
             };
 
             if state != next_state && !buffer.is_empty() {
@@ -53,7 +53,7 @@ impl Lexer {
             LexerState::Number => RawToken::Number(buffer.trim().to_string()),
             LexerState::Identifier => RawToken::Identifier(buffer.trim().to_string()),
             LexerState::Operator => RawToken::Operator(buffer.trim().to_string()),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }

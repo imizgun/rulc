@@ -14,5 +14,7 @@ pub trait EvaluationRule {
     }
 
     // infix priority
-    fn lbp(&self) -> u32 { 0 }
+    fn lbp(&self) -> u32 {
+        0
+    }
 }

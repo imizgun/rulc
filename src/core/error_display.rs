@@ -13,7 +13,7 @@ pub struct Located<E> {
 
 pub struct LocatedErrorDisplay {
     pub formatted_tokens: String,
-    pub error: String
+    pub error: String,
 }
 
 impl ErrorContext {
@@ -28,7 +28,10 @@ impl<E> Located<E> {
     }
 
     pub fn unlocated(error: E) -> Self {
-        Located { error, context: ErrorContext::new(vec![], 0) }
+        Located {
+            error,
+            context: ErrorContext::new(vec![], 0),
+        }
     }
 }
 

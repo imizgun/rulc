@@ -7,25 +7,25 @@ use crate::view::tui::TuiView;
 use crate::view::viewable::Viewable;
 
 mod core;
-mod view;
 mod mode;
 pub mod mode_error;
+mod view;
 
 fn main() {
     let args: Vec<String> = std::env::args().collect();
 
-    let view: Box<dyn Viewable> = match parse_args(&args) { 
-        Ok(v) => match v { 
+    let view: Box<dyn Viewable> = match parse_args(&args) {
+        Ok(v) => match v {
             Repl => Box::new(ReplView),
             Tui => Box::new(TuiView),
-            Mode::Inline(x) => Box::new(InlineView {expression: x}) 
+            Mode::Inline(x) => Box::new(InlineView { expression: x }),
         },
         Err(e) => {
             eprintln!("{}", e);
             std::process::exit(1);
         }
     };
-    
+
     view.run();
 }
 
@@ -38,11 +38,10 @@ fn parse_args(args: &[String]) -> Result<Mode, ModeError> {
         "--exec" => {
             if args.len() != 3 {
                 Err(ModeError::NoExpressionProvided)
-            }
-            else {
+            } else {
                 Ok(Mode::Inline(args[2].to_string()))
             }
-        },
-        _ => Err(ModeError::UnknownCommand)
+        }
+        _ => Err(ModeError::UnknownCommand),
     }
 }

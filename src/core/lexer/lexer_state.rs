@@ -3,5 +3,5 @@ pub enum LexerState {
     Idle,
     Number,
     Identifier,
-    Operator
+    Operator,
 }
