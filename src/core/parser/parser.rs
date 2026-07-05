@@ -1,10 +1,11 @@
+use crate::core::parser::statement::Statement::ClearCommand;
 use crate::core::error_display::{ErrorContext, Located};
 use crate::core::lexer::lexer::Lexer;
 use crate::core::lexer::raw_token::RawToken;
 use crate::core::parser::numeric::number_body::NumberBody;
 use crate::core::parser::parsable::Parsable;
 use crate::core::parser::parse_error::ParseError;
-use crate::core::parser::statement::Statement;
+use crate::core::parser::statement::{Clear, Statement};
 use crate::core::parser::token::Token;
 use crate::core::registries::operation_registry::OperationRegistry;
 
@@ -48,22 +49,19 @@ impl Parser<'_> {
             if clear_command == "clear" {
                 if let Some(target) = sliced.get(1) {
                     match target {
-                        RawToken::Eof => return Ok(Statement::ClearAll),
+                        RawToken::Eof => return Ok(ClearCommand(Clear::ClearAll)),
                         RawToken::Identifier(clear_target) => {
                             return match clear_target.as_str() {
-                                "plots" => Ok(Statement::ClearPlots),
-                                "output" => Ok(Statement::ClearOutput),
-                                _ => Err(Located::new(
-                                    ParseError::InvalidSyntax("invalid clear target".to_string()),
-                                    ErrorContext::new(
-                                        sliced.iter().map(|x| x.to_string()).collect(),
-                                        1,
-                                    ),
-                                )),
+                                "plots" => Ok(ClearCommand(Clear::ClearPlots)),
+                                "history" => Ok(ClearCommand(Clear::ClearOutput)),
+                                "memory" => Ok(ClearCommand(Clear::ClearMemory)),
+                                var => Ok(ClearCommand(Clear::ClearVariable(var.to_string()))),
                             };
                         }
                         _ => unreachable!(),
                     }
+                } else {
+                    return Ok(ClearCommand(Clear::ClearAll));
                 }
             }
         }

@@ -3,10 +3,12 @@ use crate::core::evaluator::evaluation_error::EvaluationError;
 use crate::core::evaluator::evaluator::Evaluator;
 use crate::core::evaluator::evaluator_result::Value::Numeric;
 use crate::core::parser::identifier_value::{BuiltinValue, FunctionIdentifier, IdentifierValue};
+use crate::core::parser::statement::Clear;
+use crate::core::parser::statement::Clear::ClearVariable;
 use crate::core::parser::statement::Statement;
 use crate::core::parser::token::Token;
 use crate::core::registries::identifiers_registry::IdentifiersRegistry;
-use crate::core::repl_output::ReplOutput;
+use crate::core::repl_output::{ReplClearOutput, ReplOutput};
 use crate::core::runtime_error::RuntimeError;
 
 const STEP: f64 = 0.01;
@@ -24,6 +26,31 @@ impl EvaluateService {
 
     pub fn identifiers_registry(&self) -> &IdentifiersRegistry {
         self.core.identifiers_registry()
+    }
+
+    // Collects every bare variable name referenced in a function body (including
+    // inside call arguments), so a definition can be rejected if a declared
+    // parameter is never actually used — e.g. `f(y) = x ^ 2`
+    fn referenced_variables(tokens: &[Token]) -> std::collections::HashSet<String> {
+        let mut names = std::collections::HashSet::new();
+        Self::collect_referenced_variables(tokens, &mut names);
+        names
+    }
+
+    fn collect_referenced_variables(tokens: &[Token], names: &mut std::collections::HashSet<String>) {
+        for token in tokens {
+            match token {
+                Token::Variable(name) => {
+                    names.insert(name.clone());
+                }
+                Token::FunctionCall { args, .. } => {
+                    for arg in args {
+                        Self::collect_referenced_variables(arg, names);
+                    }
+                }
+                _ => {}
+            }
+        }
     }
 
     fn guard_builtin(&self, name: &str) -> Result<(), RuntimeError> {
@@ -238,6 +265,12 @@ impl EvaluateService {
             }
             Statement::FunctionDefinition { name, params, body } => {
                 self.guard_builtin(&name)?;
+                let used = Self::referenced_variables(&body);
+                if let Some(unused) = params.iter().find(|p| !used.contains(*p)) {
+                    return Err(RuntimeError::from(EvaluationError::UnusedParameter(
+                        unused.clone(),
+                    )));
+                }
                 let func = FunctionIdentifier::new(params, body);
                 self.core
                     .identifiers_registry_mut()
@@ -265,9 +298,26 @@ impl EvaluateService {
 
                 self.handle_intersection(left_function_name, right_function_name, from, to)
             }
-            Statement::ClearPlots => Ok(ReplOutput::ClearPlots),
-            Statement::ClearAll => Ok(ReplOutput::ClearAll),
-            Statement::ClearOutput => Ok(ReplOutput::ClearHistory),
+            Statement::ClearCommand(com) => match com {
+                Clear::ClearAll => Ok(ReplOutput::Clear(ReplClearOutput::ClearAll)),
+                Clear::ClearPlots => Ok(ReplOutput::Clear(ReplClearOutput::ClearPlots)),
+                Clear::ClearOutput => Ok(ReplOutput::Clear(ReplClearOutput::ClearHistory)),
+                Clear::ClearMemory => {
+                    self.core.identifiers_registry_mut().clear_user_identifiers();
+                    Ok(ReplOutput::Clear(ReplClearOutput::ClearMemory))
+                }
+                ClearVariable(var) => {
+                    let is_user_defined = matches!(
+                        self.core.identifiers_registry().get_identifier(&var),
+                        Some(IdentifierValue::Number(_)) | Some(IdentifierValue::Function(_))
+                    );
+                    if !is_user_defined {
+                        return Err(RuntimeError::from(EvaluationError::UnknownClearTarget(var)));
+                    }
+                    self.core.identifiers_registry_mut().remove_identifier(&var);
+                    Ok(ReplOutput::Clear(ReplClearOutput::ClearVariable(var)))
+                }
+            },
         }
     }
 }

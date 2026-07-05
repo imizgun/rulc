@@ -9,6 +9,8 @@ pub enum EvaluationError {
     ArityMismatch(usize, usize),
     UnknownIdentifier(String),
     InvalidInterval(f64, f64),
+    UnusedParameter(String),
+    UnknownClearTarget(String),
 }
 
 impl Display for EvaluationError {
@@ -29,6 +31,14 @@ impl Display for EvaluationError {
             EvaluationError::InvalidInterval(a, b) => {
                 write!(f, "invalid interval: '{}' is greater than '{}'", a, b)
             }
+            EvaluationError::UnusedParameter(name) => {
+                write!(f, "parameter '{}' is not used in the function body", name)
+            }
+            EvaluationError::UnknownClearTarget(name) => write!(
+                f,
+                "unknown variable for clear: '{}', usage: clear <history|memory|plots|<name>>",
+                name
+            ),
         }
     }
 }

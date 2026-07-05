@@ -6,9 +6,15 @@ pub enum ReplOutput {
     Message(String),
     FuncPoints { points: Vec<(f64, f64)> },
     IntersectionPoints { points: Vec<(f64, f64)> },
-    ClearPlots,
-    ClearHistory,
+    Clear(ReplClearOutput),
+}
+
+pub enum ReplClearOutput {
     ClearAll,
+    ClearHistory,
+    ClearPlots,
+    ClearMemory,
+    ClearVariable(String),
 }
 
 impl Display for ReplOutput {
@@ -17,10 +23,16 @@ impl Display for ReplOutput {
             ReplOutput::Value(v) => write!(f, "{}", v),
             ReplOutput::Message(m) => write!(f, "{}", m),
             ReplOutput::FuncPoints { points } => write!(f, "points"),
-            ReplOutput::ClearPlots => write!(f, "plots were cleared"),
             ReplOutput::IntersectionPoints { points } => write!(f, "intersection points"),
-            ReplOutput::ClearHistory => write!(f, "history cleared"),
-            ReplOutput::ClearAll => write!(f, "everything cleared"),
+            ReplOutput::Clear(com) => {
+                match com {
+                    ReplClearOutput::ClearAll => write!(f, "everything cleared"),
+                    ReplClearOutput::ClearHistory => write!(f, "history cleared"),
+                    ReplClearOutput::ClearPlots => write!(f, "plots cleared"),
+                    ReplClearOutput::ClearMemory => write!(f, "memory cleared"),
+                    ReplClearOutput::ClearVariable(v) => write!(f, "variable {} cleared", v),
+                }
+            }
         }
     }
 }

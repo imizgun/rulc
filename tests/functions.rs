@@ -45,3 +45,16 @@ fn multiarg_fn() {
     };
     assert_eq!(v.to_string(), "7");
 }
+
+#[test]
+fn unused_parameter_is_rejected() {
+    let mut s = svc();
+    assert!(s.evaluate("f(y) = x ^ 2").is_err());
+}
+
+#[test]
+fn unused_parameter_is_rejected_even_if_body_var_exists_globally() {
+    let mut s = svc();
+    s.evaluate("x = 10").unwrap();
+    assert!(s.evaluate("f(y) = x ^ 2").is_err());
+}

@@ -1,5 +1,5 @@
 use crate::core::evaluate_service::EvaluateService;
-use crate::core::repl_output::ReplOutput;
+use crate::core::repl_output::{ReplClearOutput, ReplOutput};
 use crate::core::runtime_error::RuntimeError;
 use crate::view::viewable::Viewable;
 use colored::Colorize;
@@ -41,7 +41,8 @@ impl ReplView {
                     println!("   ({x:.4}, {y:.4})");
                 }
             }
-            Ok(ReplOutput::ClearHistory) | Ok(ReplOutput::ClearAll) => {
+            Ok(ReplOutput::Clear(ReplClearOutput::ClearHistory))
+            | Ok(ReplOutput::Clear(ReplClearOutput::ClearAll)) => {
                 crossterm::execute!(std::io::stdout(), Clear(ClearType::All), MoveTo(0, 0)).ok();
             }
             Ok(res) => println!(

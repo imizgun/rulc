@@ -11,6 +11,8 @@ cargo: `cargo install rulc`
 - `rulc --tui` for TUI mode
 - `rulc --exec <expression>` for inline mode
 
+In TUI mode, both `Esc` and `Ctrl+C` quit the app.
+
 ## Operators
 
 | Operator       | Syntax  | Example          |
@@ -115,11 +117,15 @@ Both functions are sampled over the given range and checked for sign changes in 
 
 ## Clearing
 
-| Command        | Effect                                          |
-| -------------- | ------------------------------------------------ |
-| `clear plots`  | Removes all plotted curves and intersection markers |
-| `clear output` | Clears the REPL/TUI output history                |
-| `clear`        | Both of the above                                 |
+| Command         | Effect                                              |
+| ---------------- | --------------------------------------------------- |
+| `clear plots`    | Removes all plotted curves and intersection markers |
+| `clear history`  | Clears the REPL/TUI output history                  |
+| `clear memory`   | Removes all user-defined variables and functions (builtins are untouched) |
+| `clear <name>`   | Removes a single user-defined variable or function by name |
+| `clear`          | Clears both plots and history                       |
+
+Clearing an unknown name reports `unknown variable for clear: '<name>', usage: clear <history|memory|plots|<name>>`. Builtins (`sin`, `pi`, etc.) can't be cleared.
 
 ## Project structure 
 ```

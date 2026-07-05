@@ -22,6 +22,15 @@ impl IdentifiersRegistry {
             .insert(identifier.to_owned(), value.clone());
     }
 
+    pub fn remove_identifier(&mut self, identifier: &str) -> Option<IdentifierValue> {
+        self.identifiers.remove(identifier)
+    }
+
+    pub fn clear_user_identifiers(&mut self) {
+        self.identifiers
+            .retain(|_, v| matches!(v, IdentifierValue::Builtin(_)));
+    }
+
     pub fn user_entries(&self) -> Vec<(&String, &IdentifierValue)> {
         let mut entries: Vec<_> = self
             .identifiers

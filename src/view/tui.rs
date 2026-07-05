@@ -1,9 +1,10 @@
 use crate::core::evaluate_service::EvaluateService;
-use crate::core::repl_output::ReplOutput;
+use crate::core::repl_output::{ReplClearOutput, ReplOutput};
 use crate::core::runtime_error::RuntimeError;
 use crate::view::viewable::Viewable;
 use crossterm::event::{
-    self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, MouseEventKind,
+    self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind, KeyModifiers,
+    MouseEventKind,
 };
 use ratatui::layout::{Constraint, Layout};
 use ratatui::style::{Color, Style};
@@ -127,9 +128,9 @@ impl App {
         match self.service.evaluate(&input) {
             Ok(ReplOutput::FuncPoints { points }) => self.add_plot(points),
             Ok(ReplOutput::IntersectionPoints { points }) => self.set_intersections(points),
-            Ok(ReplOutput::ClearPlots) => self.clear_plots(),
-            Ok(ReplOutput::ClearHistory) => self.history.clear(),
-            Ok(ReplOutput::ClearAll) => {
+            Ok(ReplOutput::Clear(ReplClearOutput::ClearPlots)) => self.clear_plots(),
+            Ok(ReplOutput::Clear(ReplClearOutput::ClearHistory)) => self.history.clear(),
+            Ok(ReplOutput::Clear(ReplClearOutput::ClearAll)) => {
                 self.clear_plots();
                 self.history.clear();
             }
@@ -200,6 +201,15 @@ impl App {
         self.history_scroll = scroll.clamp(0, self.max_scroll() as i16) as u16;
     }
 
+    fn push_data_to_datasets<'a>(datasets: &mut Vec<Dataset<'a>>, data: &'a Vec<(f64, f64)>) {
+        datasets.push(
+            Dataset::default()
+                .data(&*data)
+                .graph_type(GraphType::Line)
+                .marker(Marker::Braille)
+                .style(Style::new().fg(Color::DarkGray)))
+    }
+
     fn build_chart<'a>(
         &'a self,
         block: Block<'a>,
@@ -245,22 +255,10 @@ impl App {
             .collect();
 
         if y_bounds[0] <= 0.0 && 0.0 <= y_bounds[1] {
-            datasets.push(
-                Dataset::default()
-                    .data(&*h_zero)
-                    .graph_type(GraphType::Line)
-                    .marker(Marker::Braille)
-                    .style(Style::new().fg(Color::DarkGray)),
-            );
+            Self::push_data_to_datasets(&mut datasets, h_zero);
         }
         if x_min <= 0.0 && 0.0 <= x_max {
-            datasets.push(
-                Dataset::default()
-                    .data(&*v_zero)
-                    .graph_type(GraphType::Line)
-                    .marker(Marker::Braille)
-                    .style(Style::new().fg(Color::DarkGray)),
-            );
+            Self::push_data_to_datasets(&mut datasets, v_zero);
         }
 
         for (i, &(x, y)) in intersections.iter().enumerate() {
@@ -332,6 +330,7 @@ impl Viewable for TuiView {
             match event::read().unwrap() {
                 Event::Key(key) if key.kind == KeyEventKind::Press => match key.code {
                     KeyCode::Esc => break,
+                    KeyCode::Char('c') if key.modifiers.contains(KeyModifiers::CONTROL) => break,
                     KeyCode::Enter => app.submit(),
                     KeyCode::Backspace => app.delete_char_before(),
                     KeyCode::Left => app.move_left(),

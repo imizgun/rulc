@@ -22,7 +22,13 @@ pub enum Statement {
         from_tokens: Vec<Token>,
         to_tokens: Vec<Token>,
     },
+    ClearCommand(Clear)
+}
+
+pub enum Clear {
     ClearPlots,
     ClearOutput,
-    ClearAll,
+    ClearMemory,
+    ClearVariable(String),
+    ClearAll
 }
