@@ -207,7 +207,8 @@ impl App {
                 .data(&*data)
                 .graph_type(GraphType::Line)
                 .marker(Marker::Braille)
-                .style(Style::new().fg(Color::DarkGray)))
+                .style(Style::new().fg(Color::DarkGray)),
+        )
     }
 
     fn build_chart<'a>(

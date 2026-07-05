@@ -37,7 +37,10 @@ impl EvaluateService {
         names
     }
 
-    fn collect_referenced_variables(tokens: &[Token], names: &mut std::collections::HashSet<String>) {
+    fn collect_referenced_variables(
+        tokens: &[Token],
+        names: &mut std::collections::HashSet<String>,
+    ) {
         for token in tokens {
             match token {
                 Token::Variable(name) => {
@@ -303,7 +306,9 @@ impl EvaluateService {
                 Clear::ClearPlots => Ok(ReplOutput::Clear(ReplClearOutput::ClearPlots)),
                 Clear::ClearOutput => Ok(ReplOutput::Clear(ReplClearOutput::ClearHistory)),
                 Clear::ClearMemory => {
-                    self.core.identifiers_registry_mut().clear_user_identifiers();
+                    self.core
+                        .identifiers_registry_mut()
+                        .clear_user_identifiers();
                     Ok(ReplOutput::Clear(ReplClearOutput::ClearMemory))
                 }
                 ClearVariable(var) => {

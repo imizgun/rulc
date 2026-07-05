@@ -1,10 +1,10 @@
-use crate::core::parser::statement::Statement::ClearCommand;
 use crate::core::error_display::{ErrorContext, Located};
 use crate::core::lexer::lexer::Lexer;
 use crate::core::lexer::raw_token::RawToken;
 use crate::core::parser::numeric::number_body::NumberBody;
 use crate::core::parser::parsable::Parsable;
 use crate::core::parser::parse_error::ParseError;
+use crate::core::parser::statement::Statement::ClearCommand;
 use crate::core::parser::statement::{Clear, Statement};
 use crate::core::parser::token::Token;
 use crate::core::registries::operation_registry::OperationRegistry;

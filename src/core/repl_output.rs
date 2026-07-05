@@ -24,15 +24,13 @@ impl Display for ReplOutput {
             ReplOutput::Message(m) => write!(f, "{}", m),
             ReplOutput::FuncPoints { points } => write!(f, "points"),
             ReplOutput::IntersectionPoints { points } => write!(f, "intersection points"),
-            ReplOutput::Clear(com) => {
-                match com {
-                    ReplClearOutput::ClearAll => write!(f, "everything cleared"),
-                    ReplClearOutput::ClearHistory => write!(f, "history cleared"),
-                    ReplClearOutput::ClearPlots => write!(f, "plots cleared"),
-                    ReplClearOutput::ClearMemory => write!(f, "memory cleared"),
-                    ReplClearOutput::ClearVariable(v) => write!(f, "variable {} cleared", v),
-                }
-            }
+            ReplOutput::Clear(com) => match com {
+                ReplClearOutput::ClearAll => write!(f, "everything cleared"),
+                ReplClearOutput::ClearHistory => write!(f, "history cleared"),
+                ReplClearOutput::ClearPlots => write!(f, "plots cleared"),
+                ReplClearOutput::ClearMemory => write!(f, "memory cleared"),
+                ReplClearOutput::ClearVariable(v) => write!(f, "variable {} cleared", v),
+            },
         }
     }
 }

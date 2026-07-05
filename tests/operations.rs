@@ -1,9 +1,9 @@
-use rulc::core::operations::operation::Operation;
-use rulc::core::operations::sum::SumOperation;
 use rulc::core::operations::division::DivisionOperation;
-use rulc::core::operations::multiply::MultiplyOperation;
 use rulc::core::operations::minus::MinusOperation;
+use rulc::core::operations::multiply::MultiplyOperation;
+use rulc::core::operations::operation::Operation;
 use rulc::core::operations::pow::PowOperation;
+use rulc::core::operations::sum::SumOperation;
 
 #[test]
 fn sum_test_must_be_ok() {
