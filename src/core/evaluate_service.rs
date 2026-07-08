@@ -323,6 +323,7 @@ impl EvaluateService {
                     Ok(ReplOutput::Clear(ReplClearOutput::ClearVariable(var)))
                 }
             },
+            Statement::Help => Ok(ReplOutput::Help),
         }
     }
 }

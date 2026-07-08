@@ -45,6 +45,7 @@ impl ReplView {
             | Ok(ReplOutput::Clear(ReplClearOutput::ClearAll)) => {
                 crossterm::execute!(std::io::stdout(), Clear(ClearType::All), MoveTo(0, 0)).ok();
             }
+            Ok(ReplOutput::Help) => println!("{}", ReplOutput::Help),
             Ok(res) => println!(
                 "{} {}",
                 ReplView::get_invite().green().bold(),

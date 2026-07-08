@@ -23,6 +23,7 @@ pub enum Statement {
         to_tokens: Vec<Token>,
     },
     ClearCommand(Clear),
+    Help,
 }
 
 pub enum Clear {

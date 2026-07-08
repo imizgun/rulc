@@ -1,5 +1,5 @@
 use crate::core::evaluate_service::EvaluateService;
-use crate::core::repl_output::{ReplClearOutput, ReplOutput};
+use crate::core::repl_output::{HELP_TEXT, ReplClearOutput, ReplOutput};
 use crate::core::runtime_error::RuntimeError;
 use crate::view::viewable::Viewable;
 use crossterm::event::{
@@ -133,6 +133,10 @@ impl App {
             Ok(ReplOutput::Clear(ReplClearOutput::ClearAll)) => {
                 self.clear_plots();
                 self.history.clear();
+            }
+            Ok(ReplOutput::Help) => {
+                self.history
+                    .extend(HELP_TEXT.lines().map(|l| Line::from(l.to_string())));
             }
             other => self.history.extend(format_result(other)),
         }

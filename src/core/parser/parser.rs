@@ -45,6 +45,13 @@ impl Parser<'_> {
             }
         }
 
+        // Help command: help
+        if let Some(RawToken::Identifier(keyword)) = sliced.get(0) {
+            if keyword == "help" {
+                return Ok(Statement::Help);
+            }
+        }
+
         if let Some(RawToken::Identifier(clear_command)) = sliced.get(0) {
             if clear_command == "clear" {
                 if let Some(target) = sliced.get(1) {
