@@ -8,10 +8,17 @@ cargo: `cargo install rulc`
 
 ## Usage
 - `rulc` for REPL mode
-- `rulc --tui` for TUI mode
-- `rulc --exec <expression>` for inline mode
+- `rulc --tui`, `rulc -t` for TUI mode
+- `rulc --exec <expression>`, `rulc -e <expression>` for inline mode
+- `rulc --help`, `rulc -h` to print usage
+- `<cmd> | rulc` to pipe expressions in (see [Piping](#piping))
 
 In TUI mode, both `Esc` and `Ctrl+C` quit the app.
+
+## Getting help
+
+- `rulc --help` / `rulc -h` prints CLI usage (available modes and flags) and exits.
+- The `help` keyword, entered in REPL or TUI mode (or via `rulc -e help`), prints usage examples along with the list of built-in functions and constants.
 
 ## Operators
 
@@ -127,6 +134,19 @@ Both functions are sampled over the given range and checked for sign changes in 
 
 Clearing an unknown name reports `unknown variable for clear: '<name>', usage: clear <history|memory|plots|<name>>`. Builtins (`sin`, `pi`, etc.) can't be cleared.
 
+## Piping
+
+If stdin isn't a terminal, `rulc` reads expressions from it instead of opening the REPL — no flag needed:
+```
+$ echo "2 + 2" | rulc
+4
+$ printf "x = 5\nx * 2\n" | rulc
+x = 5
+10
+```
+
+Each line is evaluated on its own; results are printed bare (no `>>` prefix or color) so they're easy to consume in scripts. Errors go to stderr and processing continues with the next line; if any line failed, `rulc` exits with a non-zero status.
+
 ## Project structure 
 ```
 ├── core
@@ -136,7 +156,7 @@ Clearing an unknown name reports `unknown variable for clear: '<name>', usage: c
 └── ├── parser              // parses tokenized input
 └── ├── ├── numeric         // parses numeric expressions
 └── ├── registries          // registries for identifiers and operation 
-└── view                    // program modes (inline, REPL, TUI) 
+└── view                    // program modes (inline, REPL, TUI, pipe) 
 └── main.rs                 // program entry point
 ```
 
