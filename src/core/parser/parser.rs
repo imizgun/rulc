@@ -9,6 +9,8 @@ use crate::core::parser::statement::{Clear, Statement};
 use crate::core::parser::token::Token;
 use crate::core::registries::operation_registry::OperationRegistry;
 
+const DEFAULT_DOMAIN_OF_DEFINITION: (f64, f64) = (-3.0, 3.0);
+
 pub struct Parser<'a> {
     operation_registry: &'a OperationRegistry,
     lexer: &'a Lexer,
@@ -118,7 +120,7 @@ impl Parser<'_> {
     ) -> Result<Statement, Located<ParseError>> {
         let syntax_err = || {
             Located::unlocated(ParseError::InvalidSyntax(
-                "expected: draw <func> from <expr> to <expr>".to_string(),
+                "expected: draw <func> from <expr> to <expr> | draw <func>".to_string(),
             ))
         };
 
@@ -126,6 +128,20 @@ impl Parser<'_> {
             Some(RawToken::Identifier(name)) => name.clone(),
             _ => return Err(syntax_err()),
         };
+
+        if sliced.len() - 1 == 2 {
+            return Ok(Statement::DrawCommand {
+                function_name,
+                from_tokens: vec![
+                    Token::Number(NumberBody::from(DEFAULT_DOMAIN_OF_DEFINITION.0)),
+                    Token::Eof,
+                ],
+                to_tokens: vec![
+                    Token::Number(NumberBody::from(DEFAULT_DOMAIN_OF_DEFINITION.1)),
+                    Token::Eof,
+                ],
+            });
+        }
 
         match sliced.get(2) {
             Some(RawToken::Identifier(kw)) if kw == "from" => {}
@@ -169,6 +185,21 @@ impl Parser<'_> {
             Some(RawToken::Identifier(name)) => name.clone(),
             _ => return Err(syntax_err()),
         };
+
+        if sliced.len() - 1 == 3 {
+            return Ok(Statement::IntersectionCommand {
+                left_function_name,
+                right_function_name,
+                from_tokens: vec![
+                    Token::Number(NumberBody::from(DEFAULT_DOMAIN_OF_DEFINITION.0)),
+                    Token::Eof,
+                ],
+                to_tokens: vec![
+                    Token::Number(NumberBody::from(DEFAULT_DOMAIN_OF_DEFINITION.1)),
+                    Token::Eof,
+                ],
+            });
+        }
 
         match sliced.get(3) {
             Some(RawToken::Identifier(kw)) if kw == "from" => {}

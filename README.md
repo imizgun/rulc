@@ -81,7 +81,7 @@ Plots are available in TUI mode (`rulc --tui`).
 
 **Syntax:**
 ```
-draw <function> from <expr> to <expr>
+draw <function> from <expr> to <expr> | draw <function> (with default domain of definition: [-3; 3])
 ```
 
 **Examples:**
@@ -110,7 +110,7 @@ Multiple `draw` commands layer their curves on the same chart, each in its own c
 
 **Syntax:**
 ```
-intersect <function> <function> from <expr> to <expr>
+intersect <function> <function> from <expr> to <expr> | intersect <function_1> <function_2> (with default domain of definition: [-3; 3])
 ```
 
 **Example:**

@@ -279,13 +279,18 @@ impl App {
 
         Chart::new(datasets)
             .block(block)
-            .x_axis(Axis::default().bounds([x_min, x_max]).labels(vec![
-                Span::from(format!("{x_min:.1}")),
-                Span::from(format!("{x_max:.1}")),
-            ]))
-            .y_axis(Axis::default().bounds(y_bounds).labels(vec![
-                Span::from(format!("{:.1}", y_bounds[0])),
-                Span::from(format!("{:.1}", y_bounds[1])),
+            .x_axis(
+                Axis::default()
+                    .title("x")
+                    .bounds([x_min, x_max])
+                    .labels(vec![
+                        Span::from(format!("x = {x_min:.1}")),
+                        Span::from(format!("x = {x_max:.1}")),
+                    ]),
+            )
+            .y_axis(Axis::default().title("y").bounds(y_bounds).labels(vec![
+                Span::from(format!("y = {:.1}", y_bounds[0])),
+                Span::from(format!("y = {:.1}", y_bounds[1])),
             ]))
     }
 }

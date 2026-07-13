@@ -1,6 +1,6 @@
 [package]
 name = "rulc"
-version = "0.2.3"
+version = "0.2.4"
 edition = "2024"
 description = "An easy to use calculator with REPL and TUI modes"
 license = "GPL-3.0-or-later"
